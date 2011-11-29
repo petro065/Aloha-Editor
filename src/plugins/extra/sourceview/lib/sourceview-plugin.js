@@ -11,7 +11,8 @@
 define( [
 	'aloha',
 	'aloha/jquery',
-	'../../../../test/unit/testutils'
+	'../../../../test/unit/testutils',
+	'css!sourceview/css/sourceview'
 	// 'thunderbird/vendor/htmlbeautifier'
 ], function ( Aloha, jQuery, TestUtils ) {
 	'use strict'
@@ -168,20 +169,6 @@ define( [
 					showEntireEditableSource =
 						!!jQuery( this ).attr( 'checked' );
 				} );
-			
-			viewArea.css( {
-				'background'  : '#fff',
-				'height'      : 400,
-				'margin'      : 0,
-				'padding'     : 10,
-				'border'      : 0,
-				'color'		  : '#888',
-				'line-height' : '1.5em',
-				'font-size'   : '12px',
-				'font-family' : 'monospace',
-				'overflow'	  : 'scroll'
-				// 'white-space' : 'pre'
-			} );
 			
 			Aloha.bind(
 				'aloha-selection-changed',
