@@ -1,6 +1,6 @@
-/*!
+/**
  * Aloha-Editor adapter for Thunderbird
- * ------------------------------------
+ * ===
  * Will dynamically load aloha stylesheets which cannot be included inline in
  * the html document.
  */
@@ -11,11 +11,11 @@ define( [
 	'aloha/floatingmenu',
 	'css!thunderbird/css/aloha.css'
 ], function( Aloha, jQuery, FloatingMenu ) {
-	'use strict'
+	'use strict';
 
 	jQuery( function() {
 		jQuery( '.alohafy' ).aloha();
-	} );
+	});
 
 	// Prevents the floating menu from floating out of view
 	Aloha.bind( 'aloha-selection-changed', function() {
@@ -37,5 +37,5 @@ define( [
 
 			FloatingMenu.floatTo( { top: top, left: left } );
 		}, 100 );
-	} );
-} );
+	});
+});
