@@ -5,7 +5,7 @@
  * the html document.
  */
 
-define( [
+define([
 	'aloha',
 	'aloha/jquery',
 	'aloha/floatingmenu',
@@ -13,17 +13,17 @@ define( [
 ], function( Aloha, jQuery, FloatingMenu ) {
 	'use strict';
 
-	jQuery( function() {
-		jQuery( '.alohafy' ).aloha();
+	jQuery(function() {
+		jQuery('.alohafy').aloha();
 	});
 
 	// Prevents the floating menu from floating out of view
 	Aloha.bind( 'aloha-selection-changed', function() {
 		setTimeout( function() {
-			var pos = FloatingMenu.obj.offset(),
-			    left = pos.left,
-			    top = pos.top,
-			    reposition = false;
+			var pos = FloatingMenu.obj.offset();
+			var left = pos.left;
+			var top = pos.top;
+			var reposition = false;
 
 			if ( top < 0 ) {
 				top = 0;
