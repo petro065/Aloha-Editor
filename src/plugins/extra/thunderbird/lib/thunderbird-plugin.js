@@ -10,7 +10,8 @@ define([
 	'aloha/jquery',
 	'aloha/floatingmenu',
 	'css!thunderbird/css/aloha.css'
-], function( Aloha, jQuery, FloatingMenu ) {
+],
+function( Aloha, jQuery, FloatingMenu ) {
 	'use strict';
 
 	jQuery(function() {
@@ -35,7 +36,7 @@ define([
 				reposition = true;
 			}
 
-			FloatingMenu.floatTo( { top: top, left: left } );
+			FloatingMenu.floatTo({ top: top, left: left });
 		}, 100 );
 	});
 });
