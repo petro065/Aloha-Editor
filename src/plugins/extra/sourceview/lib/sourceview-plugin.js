@@ -1,19 +1,20 @@
 /**
  * Aloha Source Viewer
  * -------------------
- * Provides a development tool that shows the source around the selection
- * inside an editable
+ * Provides a development tool for Aloha Editor that shows the source around
+ * the selection inside an editable
  *
- * @todo support for pretty print
+ * @TODO support for pretty print
  */
 
-window.define( [
+window.define([
 	'aloha',
 	'aloha/jquery',
 	'../../../../test/unit/testutils',
 	'css!sourceview/css/sourceview'
 	// 'thunderbird/vendor/htmlbeautifier'
-], function( Aloha, jQuery, TestUtils ) {
+],
+function ( Aloha, jQuery, TestUtils ) {
 	'use strict';
 
 	var viewArea;
@@ -23,9 +24,9 @@ window.define( [
 	 * parent node.
 	 *
 	 * @param {DOMObject} node
-	 * @return {Number} integer, index of node
+	 * @return {number} An integer, index of node.
 	 */
-	function getNodeIndex ( node ) {
+	function getNodeIndex( node ) {
 		if ( !node ) {
 			return -1;
 		}
@@ -41,18 +42,18 @@ window.define( [
 		}
 
 		return -1;
-	};
+	}
 
 	/**
 	 * Given a node, and a container node, ensures that node is a child node of
 	 * that container, or at least the closest node to its original index.
 	 *
 	 * @param {DOMElement} container
-	 * @param {DOMElement} node - a child node of container
-	 * @param {DOMElement} a node element that is guarenteed to be a child node
-	 *					   of the given container node
+	 * @param {DOMElement} node A child node of container.
+	 * @param {domelement} A node element that is guarenteed to be a child node
+	 *					   of the given container node.
 	 */
-	function getCorrectCloneNode ( container, node ) {
+	function getCorrectCloneNode( container, node ) {
 		var correctNode;
 
 		if ( node.nodeType === 3 && container.childNodes.length ) {
@@ -67,7 +68,7 @@ window.define( [
 		}
 
 		return correctNode;
-	};
+	}
 
 	/**
 	 * Renders the source of the given container element, along with its
@@ -75,7 +76,7 @@ window.define( [
 	 *
 	 * @param {DOMElement} container
 	 */
-	function showSource ( container ) {
+	function showSource( container ) {
 		var source =
 			Aloha.jQuery('<div>')
 				 .text( container.html() )
@@ -93,29 +94,30 @@ window.define( [
 		var marker = viewArea.find( '.aloha-devtool-source-viewer-marker' );
 
 		if ( marker.length ) {
-			// add rounding at the tip of the selection
+			// Add rounding at the tip of the selection.
 			var radius = 3;
+
 			marker.css( 'border-radius', radius );
-			marker.find( '>b' ).first().css( {
+
+			marker.find( '>b' ).first().css({
 				'border-top-left-radius'    : radius,
 				'border-bottom-left-radius' : radius
-			} );
-			marker.find( '>b' ).last().css( {
+			});
+
+			marker.find( '>b' ).last().css({
 				'border-top-right-radius'    : radius,
 				'border-bottom-right-radius' : radius
-			} );
+			});
 
-			// scroll the view to the start of the selection
+			// Scroll the view to the start of the selection.
 			viewArea
 				.scrollTop( 0 )
-				.scrollTop( Math.max(
-					0, ( marker.offset().top -
-							viewArea.offset().top ) - 30
-				) );
+				.scrollTop( Math.max( 0, ( marker.offset().top -
+					viewArea.offset().top ) - 30 ) );
 		}
 	};
 
-	Aloha.Sidebar.right.addPanel( {
+	Aloha.Sidebar.right.addPanel({
 		id       : 'aloha-devtool-source-viewer-panel',
 		title    : '<span style="float:left; margin-left:20px;">Source Viewer</span>\
 					<span style="float:right; padding-right:10px;">\
@@ -139,7 +141,7 @@ window.define( [
 		expanded : true,
 		activeOn : true,
 		content  : '<div id="aloha-devtool-source-viewer-content"></div>',
-		onInit   : function() {
+		onInit   : function () {
 			var that = this,
 			    showEntireEditableSource = true,
 			    sidebar = this.sidebar,
@@ -148,12 +150,12 @@ window.define( [
 			viewArea = this.content.find( '#aloha-devtool-source-viewer-content' );
 
 			this.title.find( '.aloha-devtool-source-viewer-ckbx' )
-				.click( function( ev ) {
+				.click(function ( ev ) {
 					ev.stopPropagation();
-				} );
+				});
 
 			this.title.find( '#aloha-devtool-source-viewer-widen-ckbx' )
-				.change( function() {
+				.change(function () {
 					sidebar.width = jQuery( this ).attr( 'checked' )
 						? 600
 						: originalWidth;
@@ -161,107 +163,101 @@ window.define( [
 					sidebar.container.width( sidebar.width )
 						.find( '.aloha-sidebar-panels' ).width( sidebar.width );
 					sidebar.open( 0 );
-				} );
+				});
 
 			this.title.find( '#aloha-devtool-source-viewer-entire-ckbx' )
-				.change( function() {
+				.change(function () {
 					showEntireEditableSource =
 						!!jQuery( this ).attr( 'checked' );
-				} );
+				});
 
-			Aloha.bind(
-				'aloha-selection-changed',
-				function( event, range ) {
-					var sNode = range.startContainer;
-					var eNode = range.endContainer;
+			Aloha.bind( 'aloha-selection-changed', function ( event, range ) {
+				var sNode = range.startContainer;
+				var eNode = range.endContainer;
 
-					if ( !sNode || !eNode ) {
-						return;
-					}
-
-					var id = +( new Date() );
-					var sClass = 'aloha-selection-start-' + id;
-					var eClass = 'aloha-selection-end-' + id;
-
-					// Add marker classes onto the container nodes,
-					// or their parentNodes if the containers are
-					// textNodes
-					jQuery( sNode.nodeType === 3
-								? sNode.parentNode : sNode )
-									.addClass( sClass );
-
-					jQuery( eNode.nodeType === 3
-								? eNode.parentNode : eNode )
-									.addClass( eClass );
-
-					// We determine which element's source to
-					// show. If either the startContainer or the
-					// endContainer is a text node, we will want
-					// to show more of the source around our
-					// selection so we will use the parent node of
-					// the commonAncestorContainer
-					var common;
-
-					if ( showEntireEditableSource ) {
-						common = Aloha.activeEditable.obj[0];
-					} else {
-						if ( ( sNode.nodeType === 3 ||
-									eNode.nodeType === 3 ) &&
-										!jQuery( range.commonAncestorContainer )
-											.is( '.aloha-editable' ) ) {
-							common = range.commonAncestorContainer.parentNode;
-						} else {
-							common = range.commonAncestorContainer;
-						}
-					}
-
-					var clonedContainer = jQuery( jQuery( common ).clone() );
-
-					var clonedStartContainer = clonedContainer.is( '.' + sClass )
-							? clonedContainer
-							: clonedContainer.find( '.' + sClass );
-
-					var clonedEndContainer = clonedContainer.is( '.' + eClass )
-							? clonedContainer
-							: clonedContainer.find( '.' + eClass );
-
-					// We may not find clonedStart- and clonedEnd-
-					// Containers if the selection range is outside
-					// of of the active editable (something that
-					// can happen when doing CTRL+A)
-					if ( clonedStartContainer.length === 0 &&
-							clonedEndContainer.length === 0 ) {
-						return;
-					}
-
-					// Now that we have identified all our
-					// containers, we can remove markers anywhere
-					// we have placed them
-					jQuery( '.' + sClass ).removeClass( sClass );
-					jQuery( '.' + eClass ).removeClass( eClass );
-					clonedStartContainer.removeClass( sClass );
-					clonedEndContainer.removeClass( eClass );
-
-					var startNode = getCorrectCloneNode( clonedStartContainer[0], sNode );
-					var endNode = getCorrectCloneNode( clonedEndContainer[0], eNode );
-
-					var fakeRange = {
-						startContainer : startNode,
-						endContainer   : endNode,
-						startOffset    : range.startOffset,
-						endOffset      : range.endOffset
-					};
-
-					try {
-						TestUtils.addBrackets( fakeRange );
-					} catch ( ex ) {
-						viewArea.html( '[' + ex + ']' );
-						return;
-					}
-
-					showSource( clonedContainer );
+				if ( !sNode || !eNode ) {
+					return;
 				}
-			);
-		}
-	} );
-} );
+
+				var id = +( new Date() );
+				var sClass = 'aloha-selection-start-' + id;
+				var eClass = 'aloha-selection-end-' + id;
+
+				// Add marker classes onto the container nodes, or their
+				// parentNodes if the containers are textNodes.
+				jQuery( sNode.nodeType === 3
+							? sNode.parentNode : sNode )
+								.addClass( sClass );
+
+				jQuery( eNode.nodeType === 3
+							? eNode.parentNode : eNode )
+								.addClass( eClass );
+
+				// We determine which element's source to show.  If either
+				// the startContainer or the endContainer is a text node,
+				// we will want to show more of the source around our
+				// selection so we will use the parent node of the
+				// commonAncestorContainer.
+				var common;
+
+				if ( showEntireEditableSource ) {
+					common = Aloha.activeEditable.obj[0];
+				} else {
+					if ( ( sNode.nodeType === 3 ||
+								eNode.nodeType === 3 ) &&
+									!jQuery( range.commonAncestorContainer )
+										.is( '.aloha-editable' ) ) {
+						common = range.commonAncestorContainer.parentNode;
+					} else {
+						common = range.commonAncestorContainer;
+					}
+				}
+
+				var clonedContainer = jQuery( jQuery( common ).clone() );
+
+				var clonedStartContainer = clonedContainer.is( '.' + sClass )
+						? clonedContainer
+						: clonedContainer.find( '.' + sClass );
+
+				var clonedEndContainer = clonedContainer.is( '.' + eClass )
+						? clonedContainer
+						: clonedContainer.find( '.' + eClass );
+
+				// We may not find clonedStart- and clonedEnd- Containers
+				// if the selection range is outside of of the active
+				// editable (something that can happen when doing CTRL+A)
+				if ( clonedStartContainer.length === 0 &&
+					 clonedEndContainer.length === 0 ) {
+					return;
+				}
+
+				// Now that we have identified all our
+				// containers, we can remove markers anywhere
+				// we have placed them
+				jQuery( '.' + sClass ).removeClass( sClass );
+				jQuery( '.' + eClass ).removeClass( eClass );
+				clonedStartContainer.removeClass( sClass );
+				clonedEndContainer.removeClass( eClass );
+
+				var startNode = getCorrectCloneNode( clonedStartContainer[0], sNode );
+				var endNode = getCorrectCloneNode( clonedEndContainer[0], eNode );
+
+				var fakeRange = {
+					startContainer : startNode,
+					endContainer   : endNode,
+					startOffset    : range.startOffset,
+					endOffset      : range.endOffset
+				};
+
+				try {
+					TestUtils.addBrackets( fakeRange );
+				} catch ( ex ) {
+					viewArea.html( '[' + ex + ']' );
+					return;
+				}
+
+				showSource( clonedContainer );
+			}); // Aloha.bind()
+		} // onInit:
+	}); // addPanel()
+}); // require()
