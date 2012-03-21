@@ -11,16 +11,16 @@ define([
 	'aloha/floatingmenu',
 	'css!thunderbird/css/aloha.css'
 ],
-function( Aloha, jQuery, FloatingMenu ) {
+function ( Aloha, jQuery, FloatingMenu ) {
 	'use strict';
 
-	jQuery(function() {
+	jQuery(function () {
 		jQuery('.alohafy').aloha();
 	});
 
 	// Prevents the floating menu from floating out of view
-	Aloha.bind( 'aloha-selection-changed', function() {
-		setTimeout( function() {
+	Aloha.bind( 'aloha-selection-changed', function () {
+		setTimeout(function () {
 			var pos = FloatingMenu.obj.offset();
 			var left = pos.left;
 			var top = pos.top;
@@ -37,6 +37,6 @@ function( Aloha, jQuery, FloatingMenu ) {
 			}
 
 			FloatingMenu.floatTo({ top: top, left: left });
-		}, 100 );
+		}, 100);
 	});
 });
