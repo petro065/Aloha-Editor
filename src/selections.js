@@ -92,7 +92,7 @@ define([
 		var style = {
 			'top': box.top + topDelta + 'px',
 			'left': box.left + leftDelta + 'px',
-			'height': box.height + 'px',
+			'height': (box.height || 30) + 'px',
 			'width': '2px',
 			'display': 'block'
 		};
