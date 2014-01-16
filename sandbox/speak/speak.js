@@ -144,8 +144,10 @@ define([
 
 	var corrections = {
 		// for slurred speech
+		'move'        : /\bwho\b/ig,
 		'move the'    : /\bmovie\b/ig,
 		'move it'     : /\bmoving\b/ig,
+		'select'      : /\b(electra|selective)\b/ig,
 		'select this' : /\bsylectus\b/ig,
 		'selection'   : /\be[lr]ection\b/ig,
 		'words'       : /\bworth\b/ig,
@@ -154,6 +156,15 @@ define([
 		'insert'      : /\bsearch\b/ig,
 		'at the'      : /\bof the\b/ig,
 		'current'     : /\bcards\b/ig,
+		'delete'      : /\bdenise\b/ig,
+		'caret'       : /\bcar\b/ig,
+		'make it'     : /\b(making|magen|naked|fake)\b/ig,
+		'red'         : /\b(bread|bed)\b/ig,
+		'blue'        : /\bboobs\b/ig,
+		'color'       : /\bcall in\b/ig,
+		'bold'        : /\b(bolt|bald|pole)\b/ig,
+		'paragraph'   : /\bparagraph\b/ig,
+		'delete it'   : /\bdeleted\b/ig,
 
 		// substitutes for words that are not in the stanford english corpse
 		// "make" is a better substitue for "format" than "decorate" is
@@ -527,13 +538,14 @@ define([
 	}
 
 	var selectors = {
-		'paragraph' : 'P',
-		'heading'   : 'H1,H2,H3,H4,H5,H6',
-		'link'      : 'A',
-		'image'     : 'IMG',
-		'list'      : 'OL,UL',
-		'list item' : 'LI',
-		'block'     : 'DIV,P,IMG,H1,H2,H3,H4,H5,H6'
+		'paragraph'  : 'P',
+		'heading'    : 'H1,H2,H3,H4,H5,H6',
+		'link'       : 'A',
+		'image'      : 'IMG',
+		'list'       : 'OL,UL',
+		'list item'  : 'LI',
+		'list items' : 'LI',
+		'block'      : 'DIV,P,IMG,H1,H2,H3,H4,H5,H6'
 	}
 
 	function determineContainer(part, state) {
@@ -545,6 +557,12 @@ define([
 	function nextContainer(selectors, state) {
 		var names = selectors.split(',');
 		var boundaries = aloha.boundaries.get();
+		if (!boundaries) {
+			boundaries = [
+				null,
+				aloha.boundaries.fromNode(document.body.firstChild)
+			];
+		}
 		var next = aloha.boundaries.nextWhile(boundaries[1], function (boundary) {
 			return !aloha.arrays.contains(names, aloha.boundaries.container(boundary).nodeName);
 		});
@@ -584,6 +602,10 @@ define([
 		}
 
 		var container;
+		if (selector && !getContainer) {
+			container =  $(selector, state.context)[0];
+		}
+
 		if (selector && getContainer) {
 			container = getContainer(selector, state);
 		}
@@ -599,26 +621,44 @@ define([
 		return subject;
 	}
 
+	function selectNode(node) {
+		var start;
+		var end;
+		if (aloha.predicates.isVoidNode(node)) {
+			start = aloha.boundaries.fromNode(node); 
+			end = aloha.boundaries.create(
+				aloha.boundaries.container(start), 
+				aloha.boundaries.offset(start) + 1
+			);
+		} else {
+			start = aloha.boundaries.create(node, 0);
+			end = aloha.boundaries.fromEndOfNode(node);
+		}
+		return [start, end];
+	}
+
 	function resolveSubject(subject, state) {
 		if (state.subject === subject) {
 			return state.resolved;
 		}
 		var selector =  selectors[subject];
 		if (selector) {
-			return $(selector, state.context)[0];
+			return selectNode($(selector, state.context)[0]);
 		}
 		switch (subject) {
+		case 'next':
+			return selectNode(nextContainer(state.resolved.nodeName, state));
+		case 'previous':
+			return selectNode(prevContainer(state.resolved.nodeName, state));
 		case 'it':
 		case 'them':
 		case 'them all':
 		case 'this':
 		case 'that':
-			return state.resolved;
-		case 'next':
-			return nextContainer(state.resolved.nodeName, state);
-		case 'previous':
-			return prevContainer(state.resolved.nodeName, state);
+
 		case 'selection':
+
+		default:
 			return aloha.boundaries.get();
 		}
 	}
@@ -674,22 +714,25 @@ define([
 
 	function make(subject, formatting) {
 		subject = determineSubject(subject);
-		var element = resolveSubject(subject, state);
-		if (!element) {
-			console.warn('subject "' + subject + '" not found');
+		var boundaries = resolveSubject(subject, state);
+		if (!boundaries) {
+			console.error('subject "' + subject + '" not found');
 			return;
 		}
-		console.warn(element);
-		state.subject = subject;
-		state.resolved = element;
+
+		console.warn(boundaries);
+		
 		var style = determineStyling(formatting);
-		if (style) {
-			var start = aloha.boundaries.fromNode(element);
-			var end = aloha.boundaries.fromEndOfNode(element);
-			style(start, end);
-			aloha.boundaries.select(start, end);
-		} else {
-			console.warn('fomatting "' + formatting + '" not supported');
+
+		if (!style) {
+			console.error('fomatting "' + formatting + '" not supported');
+		}
+
+		style(boundaries[0], boundaries[1]);
+		aloha.boundaries.select(boundaries[0], boundaries[1]);
+
+		if (!aloha.arrays.contains(['it', 'them', 'them all', 'this', 'that'], subject)) {
+			state.subject = subject;
 		}
 	}
 
@@ -713,10 +756,13 @@ define([
 
 	function select(subject, where) {
 		var subject = determineSubject(subject);
+		var start = parsePosition(subject, state);
+		var end = aloha.boundaries.fromEndOfNode(aloha.boundaries.container(start));
 		console.warn(subject);
-		debugger;
-		var boundary = parsePosition(subject, state);
-		console.log(aloha.boundarymarkers.hint(boundary));
+		console.log(aloha.boundarymarkers.hint([start, end]));
+		aloha.boundaries.select(start, end);
+		state.subject  = subject;
+		state.resolved = [start, end];
 	}
 
 	var state = {
@@ -728,6 +774,7 @@ define([
 	};
 
 	var actions = {
+		'go'     : move,
 		'move'   : move,
 		'make'   : make,
 		'delete' : _delete,
@@ -761,15 +808,20 @@ define([
 			var diagram = parse(utterance).trim();
 			var tree = treebank(diagram);
 			var instruction = compose(tree);
+			console.log(utterance);
+			console.log(diagram);
 			console.log(instruction);
 			console.log('-----------------------------------');
-			run(instruction);
+			if (instruction) {
+				run(instruction);
+			} else {
+				console.error(utterance, diagram);
+			}
 		};
 
-		//listen(process);
+		listen(process);
 
 		var commands = [
-			/*
 			'move to first paragraph',
 			'move to end of sentence',
 			'move the selection to the start',
@@ -786,9 +838,7 @@ define([
 			'color it green',
 			'format this italic',
 			'underline this word',
-			*/
 
-			/*
 			'align left',
 			'align to left',
 			'left align',
@@ -799,7 +849,6 @@ define([
 			'delete the selection',
 			'delete it',
 			'delete the next word',
-			*/
 
 			'select the first image in the second paragraph',
 
@@ -813,6 +862,7 @@ define([
 			'paste from clipboard here'
 		];
 
+		/*
 		var interval = setInterval(function () {
 			if (commands.length) {
 				process(commands.shift());
@@ -820,8 +870,9 @@ define([
 				clearInterval(interval);
 			}
 		}, 10);
+		*/
 
-		//process("paste clipboard content at current selection"); //problematic
+		// process("paste clipboard content at current selection"); //problematic
 		// process('select paragraph, and format the selection bold'); // problematic
 		// process('select paragraph, and format it bold'); // problematic
 		// process('remove formatting'); // problematic
