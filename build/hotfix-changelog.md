@@ -8,3 +8,7 @@ All changes are categorized into one of the following keywords:
 
 ----
 
+- **BUGFIX**: align plugin: Setting horizontal alignment to content inside of a
+              table cell will no longer result in all of the content in the
+              cell being aligned, but only the content that is selected (up to
+              the nearest block-level element).
