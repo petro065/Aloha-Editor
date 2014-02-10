@@ -333,15 +333,10 @@ define([
 	 */
 	TableCell.prototype._endCellSelection = function() {
 		if (this.tableObj.selection.cellSelectionMode) {
-			Utils.selectAnchorContents(this.tableObj.selection.selectedCells);
-
 			this.tableObj.selection.cellSelectionMode = false;
 			this.tableObj.selection.baseCellPosition = null;
 			this.tableObj.selection.lastSelectionRange = null;
-
 			this.tableObj.selection.selectionType = 'cell';
-
-			//unbind the global cell selection event
 			jQuery('body').unbind('mouseup.cellselection');
 		}
 	};
