@@ -378,7 +378,6 @@ define([
 				this.toggleAlign(cac);
 			}
 
-			// reset previous button states
 			if (this.alignment !== this.lastAlignment) {
 				switch (this.lastAlignment) {
 				case 'right':
@@ -395,7 +394,7 @@ define([
 					break;
 				}
 			}
-			// Set focus on the selection
+
 			range.select();
 		},
 
