@@ -395,6 +395,8 @@ define([
 					break;
 				}
 			}
+			// Set focus on the selection
+			range.select();
 		},
 
 		getSelectedCells: function( range ) {
