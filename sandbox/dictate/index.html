@@ -89,7 +89,7 @@
 		<script src="../../build/aloha.js"></script>
 		<script async src="bootstrap.js"></script>
 		<script async src="parse.js"></script>
-		<!-- script async src="speak.js"></script-->
+		<!-- script async src="dictate.js"></script-->
 		<script>
 			(function () {
 				'use strict';
@@ -104,7 +104,7 @@
 				}
 				if ('undefined' === typeof aloha) {
 					setVersion('src');
-					require(['../../src/aloha', 'speak'], main);
+					require(['../../src/aloha', 'dictate'], main);
 				} else {
 					setVersion('build');
 					main(aloha)
