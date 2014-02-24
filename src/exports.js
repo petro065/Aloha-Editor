@@ -27,14 +27,19 @@ define([
 	'events',
 	'functions',
 	'html',
+	'image',
 	'keys',
+	'list',
+	'list/list-selection',
 	'maps',
 	'mouse',
 	'mutation',
+	'link',
+	'link/link-remove',
+	'link/link-selection',
 	'overrides',
+	'paths',
 	'paste',
-	'paste-transform-html',
-	'paste-transform-plaintext',
 	'predicates',
 	'ranges',
 	'selection-change',
@@ -45,8 +50,8 @@ define([
 	'trees',
 	'typing',
 	'undo',
-	'ms-word-transform',
-	'ms-word-transform-utils'
+	'transform/ms-word/utils',
+	'transform'
 ], function Exports(
 	Arrays,
 	Blocks,
@@ -65,14 +70,19 @@ define([
 	Events,
 	Fn,
 	Html,
+	Image,
 	Keys,
+	List,
+	ListSelection,
 	Maps,
 	Mouse,
 	Mutation,
+	Link,
+	LinkRemove,
+	LinkSelection,
 	Overrides,
+	Paths,
 	Paste,
-	PasteTransform,
-	PasteTransformPlainText,
 	Predicates,
 	Ranges,
 	SelectionChange,
@@ -83,8 +93,8 @@ define([
 	Trees,
 	Typing,
 	Undo,
-	WordTransform,
-	WordTransformUtils
+	WordTransformUtils,
+	Transform
 ) {
 	'use strict';
 
@@ -106,24 +116,29 @@ define([
 	exports['events'] = Events;
 	exports['fn'] = Fn;
 	exports['html'] = Html;
+	exports['image'] = Image;
 	exports['keys'] = Keys;
+	exports['list'] = List;
+	exports['listselection'] = ListSelection;
 	exports['maps'] = Maps;
 	exports['mouse'] = Mouse;
 	exports['mutation'] = Mutation;
+	exports['link'] = Link;
+	exports['linkremove'] = LinkRemove;
+	exports['linkselection'] = LinkSelection;
 	exports['overrides'] = Overrides;
+	exports['paths'] = Paths;
 	exports['paste'] = Paste;
-	exports['pasteTransform'] = PasteTransform;
-	exports['pasteTransformPlainText'] = PasteTransformPlainText;
 	exports['predicates'] = Predicates;
 	exports['ranges'] = Ranges;
 	exports['selectionchange'] = SelectionChange;
 	exports['selections'] = Selections;
 	exports['strings'] = Strings;
+	exports['transform'] = Transform
 	exports['traversing'] = Traversing;
 	exports['trees'] = Trees;
 	exports['typing'] = Typing;
 	exports['undo'] = Undo;
-	exports['wordTransform'] = WordTransform;
 	exports['wordTransformUtils'] = WordTransformUtils;
 	exports['xhtml'] = Xhtml;
 

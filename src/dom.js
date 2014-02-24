@@ -210,11 +210,12 @@ define([
 	}
 
 	/**
-	 * Gets the window from document.
-	 * @param {!Document} doc
+	 * Gets the window to which the given document belongs.
+	 *
+	 * @param   {Document} doc
 	 * @returns {Window}
 	 */
-	function windowFromDocument(doc) {
+	function documentWindow(doc) {
 		return doc['defaultView'] || doc['parentWindow'];
 	}
 
@@ -223,12 +224,13 @@ define([
 		offset                  : Nodes.offset,
 		cloneShallow            : Nodes.cloneShallow,
 		clone                   : Nodes.clone,
-		textContent             : Nodes.textContent,
+		text                    : Nodes.text,
 		children                : Nodes.children,
 		nthChild                : Nodes.nthChild,
 		numChildren             : Nodes.numChildren,
 		nodeIndex               : Nodes.nodeIndex,
 		nodeLength              : Nodes.nodeLength,
+		hasChildren             : Nodes.hasChildren,
 		nodeAtOffset            : Nodes.nodeAtOffset,
 		normalizedNthChild      : Nodes.normalizedNthChild,
 		normalizedNodeIndex     : Nodes.normalizedNodeIndex,
@@ -236,23 +238,30 @@ define([
 		normalizedNumChildren   : Nodes.normalizedNumChildren,
 		isTextNode              : Nodes.isTextNode,
 		isElementNode           : Nodes.isElementNode,
+		isFragmentNode          : Nodes.isFragmentNode,
 		isEmptyTextNode         : Nodes.isEmptyTextNode,
+		isSameNode              : Nodes.isSameNode,
 		equals                  : Nodes.equals,
 		contains                : Nodes.contains,
 		followedBy              : Nodes.followedBy,
+		hasText                 : Nodes.hasText,
+		fragmentHtml            : Nodes.fragmentHtml,
 
+		append            : Mutation.append,
 		merge             : Mutation.merge,
 		moveNextAll       : Mutation.moveNextAll,
-		moveSiblingsInto  : Mutation.moveSiblingsInto,
-		moveSiblingsAfter : Mutation.moveSiblingsAfter,
+		moveBefore        : Mutation.moveBefore,
+		move              : Mutation.move,
+		copy              : Mutation.copy,
 		wrap              : Mutation.wrap,
-		wrapWithNodeName  : Mutation.wrapWithNodeName,
+		wrapWith          : Mutation.wrapWith,
 		insert            : Mutation.insert,
 		insertAfter       : Mutation.insertAfter,
 		replace           : Mutation.replace,
 		replaceShallow    : Mutation.replaceShallow,
 		remove            : Mutation.remove,
 		removeShallow     : Mutation.removeShallow,
+		removeChildren     : Mutation.removeChildren,
 
 		addClass     : Classes.add,
 		removeClass  : Classes.remove,
@@ -267,6 +276,7 @@ define([
 		getAttrNS    : Attrs.getNS,
 		removeAttr   : Attrs.remove,
 		removeAttrNS : Attrs.removeNS,
+		removeAttrs  : Attrs.removeAll,
 
 		removeStyle       : Style.remove,
 		setStyle          : Style.set,
@@ -274,7 +284,10 @@ define([
 		getComputedStyle  : Style.getComputedStyle,
 		getComputedStyles : Style.getComputedStyles,
 
+		query                        : Traversing.query,
+		nextSiblings                 : Traversing.nextSiblings,
 		nextWhile                    : Traversing.nextWhile,
+		nextSibling                  : Traversing.nextSibling,
 		prevWhile                    : Traversing.prevWhile,
 		upWhile                      : Traversing.upWhile,
 		walk                         : Traversing.walk,
@@ -304,7 +317,7 @@ define([
 		isEditingHost     : isEditingHost,
 		isContentEditable : isContentEditable,
 
-		windowFromDocument : windowFromDocument,
+		documentWindow     : documentWindow,
 		editingHost        : editingHost,
 		editableParent     : editableParent
 	};

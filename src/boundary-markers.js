@@ -6,45 +6,39 @@
  * Contributors http://aloha-editor.org/contribution.php
  */
 define([
-	'dom/nodes',
-	'dom/traversing',
+	'dom',
+	'misc',
 	'mutation',
-	'cursors',
 	'arrays',
 	'strings',
-	'ranges'
+	'ranges',
+	'paths',
+	'boundaries'
 ], function BoundaryMarkers(
-	Nodes,
-	Traversing,
+	Dom,
+	Misc,
 	Mutation,
-	Cursors,
 	Arrays,
 	Strings,
-	Ranges
+	Ranges,
+	Paths,
+	Boundaries
 ) {
 	'use strict';
 
 	/**
-	 * Insert selection markers at the given range.
+	 * Insert boundary markers at the given range.
 	 *
 	 * @param {Range} range
 	 */
 	function insert(range) {
-		var leftMarkerChar  = (Nodes.isTextNode(range.startContainer) ? '[' : '{');
-		var rightMarkerChar = (Nodes.isTextNode(range.endContainer)   ? ']' : '}');
-		Mutation.splitTextContainers(range);
-		var leftMarker = document.createTextNode(leftMarkerChar);
-		var rightMarker = document.createTextNode(rightMarkerChar);
-		var start = Cursors.cursorFromBoundaryPoint(
-			range.startContainer,
-			range.startOffset
-		);
-		var end = Cursors.cursorFromBoundaryPoint(
-			range.endContainer,
-			range.endOffset
-		);
-		start.insert(leftMarker);
-		end.insert(rightMarker);
+		var doc = range.commonAncestorContainer.ownerDocument;
+		var startMarker = doc.createTextNode(Dom.isTextNode(range.endContainer) ? ']' : '}');
+		var endMarker = doc.createTextNode(Dom.isTextNode(range.startContainer) ? '[' : '{');
+		var start = Mutation.splitBoundary(Boundaries.fromRangeStart(range), [range]);
+		var end = Mutation.splitBoundary(Boundaries.fromRangeEnd(range));
+		Dom.insert(startMarker, Boundaries.nextNode(end), Boundaries.isAtEnd(end));
+		Dom.insert(endMarker, Boundaries.nextNode(start), Boundaries.isAtEnd(start));
 	}
 
 	/**
@@ -52,7 +46,7 @@ define([
 	 * of `rootElem`.
 	 *
 	 * @param {Element} rootElem
-	 * @param {Range} range
+	 * @param {Range}   range
 	 */
 	function extract(rootElem, range) {
 		var markers = ['[', '{', '}', ']'];
@@ -75,7 +69,7 @@ define([
 			markersFound += 1;
 			if (marker === '[' || marker === ']') {
 				var previousSibling = node.previousSibling;
-				if (!previousSibling || !Nodes.isTextNode(previousSibling)) {
+				if (!previousSibling || !Dom.isTextNode(previousSibling)) {
 					previousSibling = document.createTextNode('');
 					node.parentNode.insertBefore(previousSibling, node);
 				}
@@ -83,12 +77,12 @@ define([
 				// Because we have set a text offset.
 				return false;
 			}
-			range[setFn].call(range, node.parentNode, Nodes.nodeIndex(node));
+			range[setFn].call(range, node.parentNode, Dom.nodeIndex(node));
 			// Because we have set a non-text offset.
 			return true;
 		}
 		function extractMarkers(node) {
-			if (!Nodes.isTextNode(node)) {
+			if (!Dom.isTextNode(node)) {
 				return;
 			}
 			var text = node.nodeValue;
@@ -107,7 +101,7 @@ define([
 					forceNextSplit = setBoundaryPoint(part, node);
 				} else if (!forceNextSplit
 						&& node.previousSibling
-							&& Nodes.isTextNode(node.previousSibling)) {
+							&& Dom.isTextNode(node.previousSibling)) {
 					node.previousSibling.insertData(
 						node.previousSibling.length,
 						part
@@ -121,105 +115,100 @@ define([
 			});
 			node.parentNode.removeChild(node);
 		}
-		Traversing.walkRec(rootElem, extractMarkers);
+		Dom.walkRec(rootElem, extractMarkers);
 		if (2 !== markersFound) {
 			throw 'Missing one or both markers';
 		}
-	}
-
-	function getPathToPosition(container, offset, limit) {
-		var path = [offset];
-		if (container === limit) {
-			return path;
-		}
-		Traversing.childAndParentsUntilIncl(container, function (node) {
-			if (node === limit) {
-				return true;
-			}
-			path.push(Nodes.nodeIndex(node));
-			return false;
-		});
-		return path;
-	}
-
-	function getPositionFromPath(container, path) {
-		var node = container;
-		while (path.length > 1) {
-			node = node.childNodes[path.pop()];
-		}
-		return {
-			container: node,
-			offset: path.pop()
-		};
 	}
 
 	/**
 	 * Returns a string with boundary markers inserted into the representation
 	 * of the DOM to indicate the span of the given range.
 	 *
-	 * @param {Range} range
+	 * @private
+	 * @param  {Range} range
 	 * @return {string}
 	 */
-	function show(range) {
-		var container = range.commonAncestorContainer;
-
-		var startPath = getPathToPosition(
-			range.startContainer,
-			range.startOffset,
-			container
+	function showRange(range) {
+		var cac = range.commonAncestorContainer;
+		var start = Paths.fromBoundary(
+			cac,
+			Boundaries.raw(range.startContainer, range.startOffset)
 		);
-
-		var endPath = getPathToPosition(
-			range.endContainer,
-			range.endOffset,
-			container
+		var end = Paths.fromBoundary(
+			cac,
+			Boundaries.raw(range.endContainer, range.endOffset)
 		);
+		var clone;
+		var root;
 
-		var node = container.parentNode
-			? getPositionFromPath(
-				container.parentNode.cloneNode(true),
-				getPathToPosition(
-					container,
-					Nodes.nodeIndex(container),
-					container.parentNode
-				)
-			).container
-			: document.createElement('div').appendChild(
-				container.cloneNode(true)
+		if (cac.parentNode) {
+			root = Paths.fromBoundary(cac.parentNode, Boundaries.fromNode(cac));
+			clone = Boundaries.container(
+				Paths.toBoundary(cac.parentNode.cloneNode(true), root)
 			);
+		} else {
+			clone = cac.cloneNode(true);
+			var one = cac.ownerDocument.createDocumentFragment();
+			var two = cac.ownerDocument.createDocumentFragment();
+			Dom.append(clone, two);
+			Dom.append(two, one);
+		}
 
-		var start = getPositionFromPath(node, startPath);
-		var end = getPositionFromPath(node, endPath);
+		start = root.concat(start);
+		end = root.concat(end);
 
-		range = Ranges.create(
-			start.container,
-			start.offset,
-			end.container,
-			end.offset
+		var copy = Ranges.fromBoundaries(
+			Paths.toBoundary(clone, start),
+			Paths.toBoundary(clone, end)
 		);
 
-		insert(range);
+		insert(copy);
 
-		//(range.commonAncestorContainer.parentNode || range.commonAncestorContainer).outerHTML;
-		return range.commonAncestorContainer.outerHTML;
-	}
-
-	function boundary(boundary) {
-		return show(Ranges.fromBoundaries(boundary, boundary));
-	}
-
-	function boundaries(boundaries) {
-		return show(Ranges.fromBoundaries(boundaries[0], boundaries[1]));
-	}
-
-	function hint() {
-		var arg = arguments[0];
-		if (arg.length) {
-			return ('string' === typeof arg[0].nodeName)
-			     ? boundary(arg)
-			     : boundaries(arg);
+		if (Dom.Nodes.DOCUMENT_FRAGMENT !== clone.nodeType) {
+			return clone.outerHTML;
 		}
-		return show(arg);
+
+		var node = cac.ownerDocument.createElement('div');
+		Dom.append(clone, node);
+		return node.innerHTML;
+	}
+
+	/**
+	 * Show a single boundary.
+	 *
+	 * @private
+	 * @param  {Boundary} boundary
+	 * @return {string}
+	 */
+	function showBoundary(boundary) {
+		return showRange(Ranges.fromBoundaries(boundary, boundary));
+	}
+
+	/**
+	 * Show start/end boundary tuple.
+	 *
+	 * @private
+	 * @param  {Array.<Boundary>} boundaries
+	 * @return {string}
+	 */
+	function showBoundaries(boundaries) {
+		return showRange(Ranges.fromBoundaries(boundaries[0], boundaries[1]));
+	}
+
+	/**
+	 * Returns string representation of the given boundary boundaries tuple or
+	 * range.
+	 *
+	 * @param  {Boundary|Array.<Boundary>|Range}
+	 * @return {string}
+	 */
+	function hint(selection) {
+		return (!Misc.defined(selection.length))
+		     ? showRange(selection)
+		     : ('string' === typeof selection[0].nodeName)
+		     ? showBoundary(selection)
+		     : showBoundaries(selection);
 	}
 
 	return {

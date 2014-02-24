@@ -43,7 +43,20 @@
 				padding: 0;
 			}
 			/*
-			ul,ol,li,td,p,b,i,u,div,h1,h2,h3,h4,h5,h6 {
+			ol {
+			  counter-reset: section;
+			  list-style-type: none;
+			}
+			li:before {
+			  counter-increment: section;
+			  content: counters(section, ".") " ";
+			}
+			*/
+		</style>
+
+		<style id="metaview">
+			/* metaview */
+			ul,ol,li,td,th,p,b,i,u,div,h1,h2,h3,h4,h5,h6 {
 				padding: 2px 4px;
 				margin: 2px;
 				border: 1px solid rgba(0,0,0,0.2);
@@ -63,24 +76,22 @@
 				background: white;
 				min-height: 20px;
 			}
-			*/
+			font {
+				background: red;
+			}
 		</style>
 	</head>
 	<body>
-
-		<!-- div class="aloha-editable">
-			<u><span>she </span><del>s</del><b>to</b>p<del>pe</del><span>d</span>.</u><span>  she said, "hello the<b>re," a</b><del>n</del></span><del><u>d th</u></del>en went on.
-
-			<del><span>she s</span><b>topped.  she said</b>, "<b>h</b></del><span><u>el</u></span><b><u>lo t</u><u>h</u><u>e</u><span>r</span></b><u><del>e</del><b>,</b><del>"</del><i> a</i><del>nd </del><del>t</del></u><i><b>hen wen</b><del>t o</del><del>n</del></i>.
-		</div -->
-
 		<div class="aloha-editable">
-			<p><i> <b> foo</b></i></p>
-		</div>
+			<ul><li>foo<ol><li></li></ol></li></ul>
 
-		<!-- div class="aloha-editable">She stopped.  She said, "Hello there,"
-		and then went on.</div -->
-		<div class="aloha-editable">
+			<br/>
+			<br/>
+			<br/>
+			<br/>
+			<br/>
+			<br/>
+
 			<h1>Aloha Editor</h1>
 			<p>
 				<img draggable="true"
@@ -100,18 +111,17 @@
 				porta lorem lacinia consectetur. Donec ut libero sed arc
 				vehicula ultricies a non tortor*
 			</p>
-			<div>
-				<ul>
-					<li>one</li>
-					<li>two</li>
-					<li>three<ul>
-								<li>one</li>
-								<li>two</li>
-								<li>three</li>
-							</ul>
-					</li>
-				</ul>
-			</div>
+			<ul>
+				<li>one</li>
+				<li>two</li>
+				<li>three
+					<ul>
+						<li>four</li>
+						<li>five</li>
+						<li>six</li>
+					</ul>
+				</li>
+			</ul>
 			<p>
 				Donec et mollis dolor.  Praesent et diam eget libero egesta
 				mattis sit amet vitae augue.

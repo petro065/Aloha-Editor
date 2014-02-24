@@ -17,7 +17,7 @@ define([
 	/**
 	 * Numeric codes that represent the type of DOM interface node types.
 	 *
-	 * @type {!Object.<string, number>}
+	 * @type {Object.<string, number>}
 	 * @enum {number}
 	 */
 	var Nodes = {
@@ -38,7 +38,7 @@ define([
 	/**
 	 * Returns `true` if `node` is a text node.
 	 *
-	 * @param {!Node} node
+	 * @param  {Node} node
 	 * @return {boolean}
 	 */
 	function isTextNode(node) {
@@ -46,13 +46,23 @@ define([
 	}
 
 	/**
-	 * Check if `node` is an Element.
+	 * Checks whether the given node is an Element.
 	 *
 	 * @param {Node} node
-	 * @returns {boolean}
+	 * @return {boolean}
 	 */
 	function isElementNode(node) {
 		return Nodes.ELEMENT === node.nodeType;
+	}
+
+	/**
+	 * Checks whether the given node is an document fragment element.
+	 *
+	 * @param   {Node} node
+	 * @returns {boolean}
+	 */
+	function isFragmentNode(node) {
+		return Nodes.DOCUMENT_FRAGMENT === node.nodeType;
 	}
 
 	/**
@@ -61,13 +71,19 @@ define([
 	 * NB elem.childNodes.length is unreliable because "IE up to 8 does not count
 	 * empty text nodes." (http://www.quirksmode.org/dom/w3c_core.html)
 	 *
-	 * @param {!Element} elem
+	 * @param  {Element} elem
 	 * @return {number} Number of children contained in the given node.
 	 */
 	function numChildren(elem) {
 		return elem.childNodes.length;
 	}
 
+	/**
+	 * Returns a non-live array of all child nodes belonging to `elem`.
+	 *
+	 * @param  {Element} elem
+	 * @return {Array.<Node>}
+	 */
 	function children(elem) {
 		return Arrays.coerce(elem.childNodes);
 	}
@@ -76,7 +92,7 @@ define([
 	 * Calculates the positional index of the given node inside of its parent
 	 * element.
 	 *
-	 * @param {!Node} node
+	 * @param  {Node} node
 	 * @return {number} The zero-based index of the given node's position.
 	 */
 	function nodeIndex(node) {
@@ -91,17 +107,26 @@ define([
 	/**
 	 * Determines the length of the given DOM node.
 	 *
-	 * @param {!Node} node
+	 * @param  {Node} node
 	 * @return {number} Length of the given node.
 	 */
 	function nodeLength(node) {
-		if (isElementNode(node)) {
+		if (isElementNode(node) || isFragmentNode(node)) {
 			return numChildren(node);
 		}
 		if (isTextNode(node)) {
 			return node.length;
 		}
 		return 0;
+	}
+
+	/**
+	 * Checks is `element` has children
+	 * @param  {Element} element
+	 * @return {boolean}
+	 */
+	function hasChildren(element) {
+		return numChildren(element) > 0;
 	}
 
 	/**
@@ -130,8 +155,24 @@ define([
 		return node;
 	}
 
+	/**
+	 * Checks whether the given node is an empty text node, conveniently.
+	 *
+	 * @param  {Node} node
+	 * @return {boolean}
+	 */
 	function isEmptyTextNode(node) {
 		return isTextNode(node) && 0 === nodeLength(node);
+	}
+
+	/**
+	 * Checks is `node1` is the same as `node2`.
+	 * @param {Node} node1
+	 * @param {Node} node2
+	 * @returns {boolean}
+	 */
+	function isSameNode(node1, node2) {
+		return node1 === node2;
 	}
 
 	function translateNodeIndex(elem, normalizedIndex, realIndex) {
@@ -222,14 +263,19 @@ define([
 	}
 
 	/**
+	 * Checks whether node `other` comes after `node` in the document order.
+	 *
 	 * @fixme rename to follows()
+	 * @param  {Node} node
+	 * @param  {Node} other
+	 * @return {boolean}
 	 */
-	function followedBy(a, b) {
-		return !!(a.compareDocumentPosition(b) & 4);
+	function followedBy(node, other) {
+		return !!(node.compareDocumentPosition(other) & 4);
 	}
 
 	/**
-	 * Calculate the offset of the given node inside the document.
+	 * Calculates the offset of the given node inside the document.
 	 *
 	 * @param  {Node} node
 	 * @return {Object.<string, number>}
@@ -249,27 +295,45 @@ define([
 	}
 
 	/**
-	 * Get the textContent from a node.
+	 * Gets the textContent from a node.
 	 *
-	 * @param {Node} node
+	 * @param  {Node} node
 	 * @return {string}
 	 */
-	function textContent(node) {
+	function text(node) {
 		return node.textContent;
 	}
 
-	function equals(node, otherNode) {
-		return node.isEqualNode(otherNode);
+	/**
+	 * Checks the givne element has any textContent.
+	 *
+	 * @param  {Element} element
+	 * @return {boolean}
+	 */
+	function hasText(element) {
+		return text(element).trim().length > 0;
+	}
+
+	/**
+	 * Checks whether two nodes are equal.
+	 *
+	 * @param  {Node} node
+	 * @param  {Node} other
+	 * @return {boolean}
+	 */
+	function equals(node, other) {
+		return node.isEqualNode(other);
 	}
 
 	/**
 	 * Returns a deep clone of the given node.
 	 *
-	 * @param  {Node} node
+	 * @param  {Node}    node
+	 * @param  {boolean} deeply Whether or not to do a deep clone
 	 * @return {Node}
 	 */
-	function clone(node) {
-		return node.cloneNode(true);
+	function clone(node, deeply) {
+		return node.cloneNode(('boolean' === typeof deeply) ? deeply : true);
 	}
 
 	/**
@@ -282,19 +346,23 @@ define([
 		return node.cloneNode(false);
 	}
 
+	function fragmentHtml(fragment) {
+		var div = fragment.ownerDocument.createElement('div');
+		div.appendChild(fragment);
+		return div.innerHTML;
+	}
+
 	return {
 		Nodes : Nodes,
-
 		offset : offset,
-
-		textContent : textContent,
-		children     : children,
+		children : children,
 
 		nodeAtOffset : nodeAtOffset,
 		nthChild     : nthChild,
 		numChildren  : numChildren,
 		nodeIndex    : nodeIndex,
 		nodeLength   : nodeLength,
+		hasChildren  : hasChildren,
 
 		normalizedNthChild      : normalizedNthChild,
 		normalizedNodeIndex     : normalizedNodeIndex,
@@ -303,13 +371,20 @@ define([
 
 		isTextNode      : isTextNode,
 		isElementNode   : isElementNode,
+		isFragmentNode  : isFragmentNode,
 		isEmptyTextNode : isEmptyTextNode,
+		isSameNode      : isSameNode,
+
+		text : text,
+		hasText : hasText,
 
 		equals     : equals,
 		contains   : contains,
 		followedBy : followedBy,
 
-		clone             : clone,
-		cloneShallow      : cloneShallow,
+		clone        : clone,
+		cloneShallow : cloneShallow,
+
+		fragmentHtml : fragmentHtml
 	};
 });

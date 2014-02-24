@@ -87,8 +87,9 @@ define([
 	function show(caret, boundary, opt_style) {
 		var box = Ranges.box(Ranges.fromBoundaries(boundary, boundary));
 		var doc = caret.ownerDocument;
-		var topDelta = window.pageYOffset - doc.body.clientTop;
-		var leftDelta = window.pageXOffset - doc.body.clientLeft;
+		var win = Dom.documentWindow(doc);
+		var topDelta = win.pageYOffset - doc.body.clientTop;
+		var leftDelta = win.pageXOffset - doc.body.clientLeft;
 		var style = {
 			'top': box.top + topDelta + 'px',
 			'left': box.left + leftDelta + 'px',
@@ -620,13 +621,32 @@ define([
 	/**
 	 * Returns a range based on the given event object.
 	 *
-	 * @param  {Object} event An Aloha Editor event
+	 * @param  {AlohaEvent} alohaEvent An Aloha Editor event
 	 * @return {?Range}
 	 */
 	function fromEvent(alohaEvent) {
-		return alohaEvent.range
-		    || Ranges.fromPosition(alohaEvent.nativeEvent.clientX, alohaEvent.nativeEvent.clientY)
-		    || Ranges.get();
+		if (alohaEvent.range) {
+			return Ranges.fromPosition(
+				alohaEvent.nativeEvent.clientX,
+				alohaEvent.nativeEvent.clientY,
+				alohaEvent.range.commonAncestorContainer.ownerDocument
+			);
+		}
+		return Ranges.get();
+	}
+
+	/**
+	 * Scrolls the viewport to the position of the given boundary.
+	 *
+	 * @param {Boundary}
+	 */
+	function scrollTo(boundary) {
+		var box = Ranges.box(Ranges.fromBoundaries(boundary, boundary));
+		var doc = Boundaries.container(boundary).ownerDocument;
+		var win = Dom.documentWindow(doc);
+		var topDelta = win.pageYOffset - doc.body.clientTop;
+		var leftDelta = win.pageXOffset - doc.body.clientLeft;
+		win.scrollTo(box.left + leftDelta, box.top + topDelta);
 	}
 
 	/**
@@ -744,6 +764,7 @@ define([
 		handle       : handle,
 		Context      : Context,
 		hideCarets   : hideCarets,
-		unhideCarets : unhideCarets
+		unhideCarets : unhideCarets,
+		scrollTo     : scrollTo
 	};
 });

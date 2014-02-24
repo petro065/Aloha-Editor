@@ -8,10 +8,12 @@
  */
 define([
 	'dom/nodes',
-	'functions'
+	'functions',
+	'arrays'
 ], function DomTraversing(
 	Nodes,
-	Fn
+	Fn,
+	Arrays
 ) {
 	'use strict';
 
@@ -87,45 +89,6 @@ define([
 			prev = prev.lastChild;
 		}
 		return prev || node.parentNode;
-	}
-
-	/**
-	 * Finds the first node that returns true for `match` before reaching a node
-	 * that returns true for `until`.
-	 *
-	 * The traversing algorithm step twice in and out of elements and once
-	 * inside of text nodes and void elements.
-	 *
-	 * Goes upward and backward in the DOM hierarchy.
-	 *
-	 * @param {DOMObject} node
-	 * @param {Function(DOMObject, Boolean):Boolean}
-	 * @param {Function(DOMObject, Boolean):Boolean}
-	 * @return {DOMObject}
-	 */
-	function findThrough(start, match, until) {
-		match = match || Fn.returnTrue;
-		until = until || Fn.returnFalse;
-		var next;
-		var node = start;
-		var isSteppingIn = true;
-		while (node) {
-			next = (isSteppingIn && node.lastChild) || node.previousSibling;
-			if (next) {
-				isSteppingIn = true;
-			} else {
-				isSteppingIn = false;
-				next = node.parentNode;
-			}
-			if (!next || until(next, isSteppingIn)) {
-				return null;
-			}
-			if (match(next, isSteppingIn)) {
-				return next;
-			}
-			node = next;
-		}
-		return null;
 	}
 
 	/**
@@ -454,7 +417,7 @@ define([
 	 *
 	 * @param {DOMObject} start
 	 * @param {Boolean} previous
-	 *        If true, will look for the nearest preceeding node, otherwise the
+	 *        If true, will look for the nearest preceding node, otherwise the
 	 *        nearest subsequent node.
 	 * @param {Function(DOMObject):Boolean} match
 	 * @param {Function(DOMObject):Boolean} until
@@ -487,7 +450,37 @@ define([
 		}
 	}
 
+	/**
+	 * Executes a query selection (-all) in the given context and returns a
+	 * non-live list of results.
+	 *
+	 * @param  {string} selector
+	 * @param  {Element} context
+	 * @return {Array.<Node>}
+	 */
+	function query(selector, context) {
+		return Arrays.coerce(context.querySelectorAll(selector));
+	}
+
+	/**
+	 * Returns a non-live list of the given node and all it's subsequent
+	 * siblings until the predicate returns true.
+	 *
+	 * @param  {Node} node
+	 * @param  {function(Node):boolean}
+	 * @return {Array.<Node>}
+	 */
+	function nextSiblings(node, until) {
+		var nodes = [];
+		walkUntil(node, function (next) {
+			nodes.push(next);
+		}, until || Fn.returnFalse);
+		return nodes;
+	}
+
 	return {
+		query                        : query,
+		nextSiblings                 : nextSiblings,
 		nextWhile                    : nextWhile,
 		prevWhile                    : prevWhile,
 		upWhile                      : upWhile,
@@ -502,6 +495,7 @@ define([
 		childAndParentsUntilIncl     : childAndParentsUntilIncl,
 		childAndParentsUntilNode     : childAndParentsUntilNode,
 		childAndParentsUntilInclNode : childAndParentsUntilInclNode,
-		nextNonAncestor              : nextNonAncestor
+		nextNonAncestor              : nextNonAncestor,
+		nextSibling                  : nextSibling
 	};
 });

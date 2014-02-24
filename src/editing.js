@@ -20,13 +20,8 @@
  *      <p>{<b>some</br>text</b>}<br/></p>
  */
 define([
-	'dom/nodes',
-	'dom/mutation',
-	'dom/attrs',
-	'dom/style',
 	'dom',
 	'mutation',
-	'dom/traversing',
 	'boundaries',
 	'arrays',
 	'maps',
@@ -38,13 +33,8 @@ define([
 	'cursors',
 	'content'
 ], function Editing(
-	Nodes,
-	DomMutation,
-	Attrs,
-	Style,
 	Dom,
 	Mutation,
-	Traversing,
 	Boundaries,
 	Arrays,
 	Maps,
@@ -65,7 +55,7 @@ define([
 	 */
 	function walkSiblings(parent, beforeAtAfterChild, before, at, after, arg) {
 		var func = before;
-		Traversing.walk(parent.firstChild, function (child) {
+		Dom.walk(parent.firstChild, function (child) {
 			if (child !== beforeAtAfterChild) {
 				func(child, arg);
 			} else {
@@ -106,7 +96,7 @@ define([
 		// <elem>text{</elem> or <elem>text}</elem>
 		// ascendecending would start at <elem> ignoring "text".
 		if (ascendNodes.length && atEnd) {
-			Traversing.walk(ascendNodes[0].firstChild, before, args[0]);
+			Dom.walk(ascendNodes[0].firstChild, before, args[0]);
 		}
 		for (i = 0; i < ascendNodes.length - 1; i++) {
 			var child = ascendNodes[i];
@@ -146,7 +136,7 @@ define([
 		// Because range may be mutated during traversal, we must only
 		// refer to it before traversal.
 		var cac = liveRange.commonAncestorContainer;
-		if (Nodes.isTextNode(cac)) {
+		if (Dom.isTextNode(cac)) {
 			cac = cac.parentNode;
 		}
 		var sc         = liveRange.startContainer;
@@ -154,13 +144,13 @@ define([
 		var so         = liveRange.startOffset;
 		var eo         = liveRange.endOffset;
 		var collapsed  = liveRange.collapsed;
-		var start      = Nodes.nodeAtOffset(sc, so);
-		var end        = Nodes.nodeAtOffset(ec, eo);
+		var start      = Dom.nodeAtOffset(sc, so);
+		var end        = Dom.nodeAtOffset(ec, eo);
 		var startAtEnd = Boundaries.isAtEnd(Boundaries.raw(sc, so));
 		var endAtEnd   = Boundaries.isAtEnd(Boundaries.raw(ec, eo));
 
-		var ascStart    = Traversing.childAndParentsUntilNode(start, cac);
-		var ascEnd      = Traversing.childAndParentsUntilNode(end,   cac);
+		var ascStart    = Dom.childAndParentsUntilNode(start, cac);
+		var ascEnd      = Dom.childAndParentsUntilNode(end,   cac);
 		var stepAtStart = makePointNodeStep(start, startAtEnd, stepRightStart, stepPartial);
 		var stepAtEnd   = makePointNodeStep(end, endAtEnd, stepRightEnd, stepPartial);
 		ascendWalkSiblings(ascStart, startAtEnd, carryDown, stepLeftStart, stepAtStart, stepRightStart, arg);
@@ -168,7 +158,7 @@ define([
 		var cacChildStart = Arrays.last(ascStart);
 		var cacChildEnd   = Arrays.last(ascEnd);
 		stepAtStart = makePointNodeStep(start, startAtEnd, stepInbetween, stepPartial);
-		Traversing.walkUntilNode(cac.firstChild, stepLeftStart, cacChildStart, arg);
+		Dom.walkUntilNode(cac.firstChild, stepLeftStart, cacChildStart, arg);
 		if (cacChildStart) {
 			var next = cacChildStart.nextSibling;
 			if (cacChildStart === cacChildEnd) {
@@ -177,14 +167,14 @@ define([
 				}
 			} else {
 				stepAtStart(cacChildStart, arg);
-				Traversing.walkUntilNode(next, stepInbetween, cacChildEnd, arg);
+				Dom.walkUntilNode(next, stepInbetween, cacChildEnd, arg);
 				if (cacChildEnd) {
 					next = cacChildEnd.nextSibling;
 					stepAtEnd(cacChildEnd, arg);
 				}
 			}
 			if (cacChildEnd) {
-				Traversing.walk(next, stepRightEnd, arg);
+				Dom.walk(next, stepRightEnd, arg);
 			}
 		}
 	}
@@ -215,7 +205,7 @@ define([
 		// refer to it before traversal.
 		var cac = liveRange.commonAncestorContainer;
 		walkBoundaryInsideOutside(liveRange, getOverride, pushDownOverride, clearOverride, clearOverrideRec, cacOverride);
-		var fromCacToTop = Traversing.childAndParentsUntilInclNode(
+		var fromCacToTop = Dom.childAndParentsUntilInclNode(
 			cac,
 			pushDownFrom
 		);
@@ -235,14 +225,14 @@ define([
 			return null;
 		}
 		var cac = range.commonAncestorContainer;
-		if (Nodes.Nodes.TEXT === cac.nodeType) {
+		if (Dom.isTextNode(cac)) {
 			cac = cac.parentNode;
 		}
 		function untilIncl(node) {
 			// Because we prefer a node above the cac if possible.
 			return (cac !== node && isReusable(node)) || isUpperBoundary(node) || isObstruction(node);
 		}
-		var cacToReusable = Traversing.childAndParentsUntilIncl(cac, untilIncl);
+		var cacToReusable = Dom.childAndParentsUntilIncl(cac, untilIncl);
 		var reusable = Arrays.last(cacToReusable);
 		if (!isReusable(reusable)) {
 			// Because, although we preferred a node above the cac, we
@@ -357,20 +347,20 @@ define([
 		var isContextOverride = formatter.isContextOverride;
 		var isClearable = formatter.isClearable;
 		var clearOverrideRec = formatter.clearOverrideRec  || function (node) {
-			Traversing.walkRec(node, clearOverride);
+			Dom.walkRec(node, clearOverride);
 		};
 		var topmostOverrideNode = null;
 		var cacOverride = null;
 		var isNonClearableOverride = false;
 		var upperBoundaryAndAbove = false;
-		var fromCacToContext = Traversing.childAndParentsUntilIncl(
+		var fromCacToContext = Dom.childAndParentsUntilIncl(
 			cac,
 			function (node) {
 				// Because we shouldn't expect hasContext to handle the document
 				// element (which has nodeType 9).
 				return (
 					!node.parentNode
-						|| Nodes.Nodes.DOCUMENT === node.parentNode.nodeType
+						|| Dom.Nodes.DOCUMENT === node.parentNode.nodeType
 							|| hasInheritableContext(node)
 				);
 			}
@@ -430,7 +420,7 @@ define([
 		}
 		adjustPointWrap(leftPoint, node, wrapper);
 		adjustPointWrap(rightPoint, node, wrapper);
-		DomMutation.wrap(node, wrapper);
+		Dom.wrap(node, wrapper);
 		return true;
 	}
 
@@ -440,7 +430,7 @@ define([
 	function moveBackIntoWrapper(node, ref, atEnd, leftPoint, rightPoint) {
 		// Because the points will just be moved with the node, we don't need to
 		// do any special preservation.
-		DomMutation.insert(node, ref, atEnd);
+		Dom.insert(node, ref, atEnd);
 	}
 
 	function fixupRange(liveRange, mutate, trim) {
@@ -515,14 +505,14 @@ define([
 	}
 
 	function restackRec(node, hasContext, ignoreHorizontal, ignoreVertical) {
-		if (Nodes.Nodes.ELEMENT !== node.nodeType || !ignoreVertical(node)) {
+		if (!Dom.isElementNode(node) || !ignoreVertical(node)) {
 			return null;
 		}
-		var maybeContext = Traversing.nextWhile(node.firstChild, ignoreHorizontal);
+		var maybeContext = Dom.nextWhile(node.firstChild, ignoreHorizontal);
 		if (!maybeContext) {
 			return null;
 		}
-		var notIgnorable = Traversing.nextWhile(maybeContext.nextSibling, ignoreHorizontal);
+		var notIgnorable = Dom.nextWhile(maybeContext.nextSibling, ignoreHorizontal);
 		if (notIgnorable) {
 			return null;
 		}
@@ -564,7 +554,7 @@ define([
 			} else {
 				// Because if wrapping is not successful, we try again
 				// one level down.
-				Traversing.walk(node.firstChild, function (node) {
+				Dom.walk(node.firstChild, function (node) {
 					ensureWrapper(node, createWrapper, isWrapper, isMergable, pruneContext, addContextValue, leftPoint, rightPoint);
 				});
 			}
@@ -676,7 +666,7 @@ define([
 		}
 
 		function clearOverrideRec(node) {
-			Traversing.walkRec(node, clearOverrideRecStep);
+			Dom.walkRec(node, clearOverrideRecStep);
 		}
 
 		function pushDownOverride(node, override) {
@@ -694,7 +684,7 @@ define([
 			if (isContextOverride(override)) {
 				return;
 			}
-			Traversing.walk(node.firstChild, clearOverrideRec);
+			Dom.walk(node.firstChild, clearOverrideRec);
 			wrapContextValue(node, contextValue);
 		}
 
@@ -824,14 +814,14 @@ define([
 			if (Arrays.contains(nodeNames, node.nodeName)) {
 				return wrapperProps.value;
 			}
-			var override = Style.get(node, styleName);
+			var override = Dom.getStyle(node, styleName);
 			return !Strings.isEmpty(override) ? override : null;
 		}
 		function getInheritableOverride(node) {
 			if (Arrays.contains(nodeNames, node.nodeName)) {
 				return wrapperProps.value;
 			}
-			var override = Style.getComputedStyle(node, styleName);
+			var override = Dom.getComputedStyle(node, styleName);
 			return !Strings.isEmpty(override) ? override : null;
 		}
 		function isContextStyle(value) {
@@ -844,20 +834,20 @@ define([
 			if (Arrays.contains(nodeNames, node.nodeName)) {
 				return true;
 			}
-			return !Strings.isEmpty(Style.get(node, styleName));
+			return !Strings.isEmpty(Dom.getStyle(node, styleName));
 		}
 		function hasContextValue(node, value) {
 			value = normalizeStyleValue(value);
 			if (Arrays.contains(nodeNames, node.nodeName) && isStyleEqual(wrapperProps.value, value)) {
 				return true;
 			}
-			return isStyleEqual(Style.get(node, styleName), value);
+			return isStyleEqual(Dom.getStyle(node, styleName), value);
 		}
 		function hasContext(node) {
 			if (!unformat && Arrays.contains(nodeNames, node.nodeName)) {
 				return true;
 			}
-			return isContextStyle(Style.get(node, styleName));
+			return isContextStyle(Dom.getStyle(node, styleName));
 		}
 		function hasInheritableContext(node) {
 			if (!unformat && Arrays.contains(nodeNames, node.nodeName)) {
@@ -872,9 +862,9 @@ define([
 			// style to the default value, for example
 			// "text-decoration: none" to be ignored.
 			if (unformat && Html.isStyleInherited(styleName)) {
-				return isContextStyle(Style.get(node, styleName));
+				return isContextStyle(Dom.getStyle(node, styleName));
 			}
-			return isContextStyle(Style.getComputedStyle(node, styleName));
+			return isContextStyle(Dom.getComputedStyle(node, styleName));
 		}
 		function addContextValue(value, node) {
 			value = normalizeStyleValue(value);
@@ -884,13 +874,13 @@ define([
 			// Because we don't want to add an explicit style if for
 			// example the element already has a class set on it. For
 			// example: <span class="bold"></span>.
-			if (isStyleEqual(normalizeStyleValue(Style.getComputedStyle(node, styleName)), value)) {
+			if (isStyleEqual(normalizeStyleValue(Dom.getComputedStyle(node, styleName)), value)) {
 				return;
 			}
-			Style.set(node, styleName, value);
+			Dom.setStyle(node, styleName, value);
 		}
 		function removeContext(node) {
-			Style.remove(node, styleName);
+			Dom.removeStyle(node, styleName);
 		}
 		function isReusable(node) {
 			if (Arrays.contains(nodeNames, node.nodeName)) {
@@ -899,7 +889,7 @@ define([
 			return 'SPAN' === node.nodeName;
 		}
 		function isPrunable(node) {
-			return isReusable(node) && !Attrs.has(node);
+			return isReusable(node) && !Dom.hasAttrs(node);
 		}
 		function createWrapper(value) {
 			value = normalizeStyleValue(value);
@@ -907,7 +897,7 @@ define([
 				return document.createElement(wrapperProps.name);
 			}
 			var wrapper = document.createElement('SPAN');
-			Style.set(wrapper, styleName, value);
+			Dom.setStyle(wrapper, styleName, value);
 			return wrapper;
 		}
 		var impl = Maps.merge({
@@ -967,7 +957,7 @@ define([
 			// does more than just provide a context (for example a <b>
 			// node may have a class which shouldn't also being wrapped
 			// around the merged-with node).
-			return node.nodeName === nodeName && !Attrs.has(node);
+			return node.nodeName === nodeName && !Dom.hasAttrs(node);
 		}
 		function isPrunable(node) {
 			return isReusable(node);
@@ -1109,7 +1099,7 @@ define([
 			if (!wrapper || parent.previousSibling !== wrapper) {
 				wrapper = opts.clone(parent);
 				removeEmpty.push(parent);
-				DomMutation.insert(wrapper, parent, false);
+				Dom.insert(wrapper, parent, false);
 				if (leftPoint.node === parent && !leftPoint.atEnd) {
 					leftPoint.node = wrapper;
 				}
@@ -1120,7 +1110,7 @@ define([
 			moveBackIntoWrapper(node, wrapper, true, leftPoint, rightPoint);
 		}
 
-		var ascend = Traversing.childAndParentsUntilIncl(node, opts.below);
+		var ascend = Dom.childAndParentsUntilIncl(node, opts.below);
 		var unsplitParent = ascend.pop();
 		if (unsplitParent && opts.below(unsplitParent)) {
 			ascendWalkSiblings(ascend, atEnd, carryDown, intoWrapper, Fn.noop, Fn.noop);
@@ -1129,114 +1119,16 @@ define([
 		return unsplitParent;
 	}
 
-	/**
-	 * Tags representing elements which cannot be used as range containers.
-	 *
-	 * It is impossible to have the browser to maintain a selection inside any
-	 * of these elements.
-	 *
-	 * If a range is to be set inside of a list element, for example, the range
-	 * would have to use one of UL's or OL's children (LI) elements as its
-	 * start or end container.
-	 *
-	 * @private
-	 * @type {Object.<string, boolean>}
-	 */
-	var INVALID_RANGE_CONTAINERS = {
-		// List containers
-		'OL'       : true,
-		'UL'       : true,
-		'DL'       : true,
-		'MENU'     : true,
-
-		// Table layout containers
-		'TABLE'    : true,
-		'COLGROUP' : true,
-		'THEAD'    : true,
-		'TBODY'    : true,
-		'TFOOT'    : true,
-		'TR'       : true,
-
-		// Dropdown menu containers
-		'DATALIST' : true,
-		'SELECT'   : true,
-		'OPTION'   : true,
-		'OPTGROUP' : true,
-
-		// Code container
-		'SCRIPT'   : true,
-		'STYLE'    : true,
-
-		// Void Elements
-		'AREA'     : true,
-		'BASE'     : true,
-		'BR'       : true,
-		'COL'      : true,
-		'COMMAND'  : true,
-		'EMBED'    : true,
-		'HR'       : true,
-		'IMG'      : true,
-		'INPUT'    : true,
-		'KEYGEN'   : true,
-		'LINK'     : true,
-		'META'     : true,
-		'PARAM'    : true,
-		'SOURCE'   : true,
-		'TRACK'    : true,
-		'WBR'      : true
-	};
-
-	function isVisibleBoundary(boundary) {
-		boundary = Boundaries.normalize(boundary);
-		var node = Boundaries.container(boundary);
-		if (INVALID_RANGE_CONTAINERS[node.nodeName]) {
-			return false;
-		}
-		if (Html.isUnrendered(node)) {
-			return false;
-		}
-		if (Boundaries.isAtEnd(boundary)) {
-			var before = Boundaries.nodeBefore(boundary);
-			return !before || !Html.hasLinebreakingStyle(
-				Traversing.prevWhile(before, Html.isUnrendered)
-			);
-		}
-		return true;
-	}
-
-	function normalizeBoundary(boundary) {
-		if (Boundaries.isNodeBoundary(boundary)) {
-			while (!isVisibleBoundary(boundary) || Html.isUnrendered(Boundaries.nextNode(boundary))) {
-				boundary = Boundaries.next(boundary);
-			}
-			return boundary;
-		}
-		if (Boundaries.isAtRawEnd(boundary)) {
-			return boundary;
-		}
-		var offset = nextSignificantOffset(boundary);
-		if (-1 === offset) {
-			return Boundaries.nextRawBoundary(boundary);
-		}
-		if (offset === Boundaries.offset(boundary)) {
-			return boundary;
-		}
-		return Boundaries.raw(Boundaries.container(boundary), offset);
-	}
-
 	function splitRangeAtBoundaries(range, left, right, opts) {
 		var normalizeLeft = opts.normalizeRange ? left : left.clone();
 		var normalizeRight = opts.normalizeRange ? right : right.clone();
-
-		Html.normalizeBoundary(Cursors.toBoundary(normalizeLeft));
-		Html.normalizeBoundary(Cursors.toBoundary(normalizeRight));
 
 		Cursors.setToRange(range, normalizeLeft, normalizeRight);
 
 		var removeEmpty = [];
 
-		var start = Nodes.nodeAtOffset(range.startContainer, range.startOffset);
-		var end = Nodes.nodeAtOffset(range.endContainer, range.endOffset);
+		var start = Dom.nodeAtOffset(range.startContainer, range.startOffset);
+		var end = Dom.nodeAtOffset(range.endContainer, range.endOffset);
 
 		var startAtEnd = Boundaries.isAtEnd(Boundaries.raw(range.startContainer, range.startOffset));
 		var endAtEnd = Boundaries.isAtEnd(Boundaries.raw(range.endContainer, range.endOffset));
@@ -1304,9 +1196,9 @@ define([
 		opts = opts || {};
 
 		opts = Maps.merge({
-			clone: Nodes.cloneShallow,
+			clone: Dom.cloneShallow,
 			until: Fn.returnFalse,
-			below: Nodes.isEditingHost,
+			below: Dom.isEditingHost,
 			normalizeRange: true
 		}, opts);
 
@@ -1336,13 +1228,11 @@ define([
 	 *
 	 * @see https://dvcs.w3.org/hg/editing/raw-file/tip/editing.html#deleting-the-selection
 	 *
-	 * @param {Range} range
-	 * @param {Object} context
+	 * @param  {Range} range
 	 * @return {Range}
-	 *         The modified range, after deletion.
 	 */
-	function delete_(liveRange, context) {
-		fixupRange(liveRange, function delete_(range, left, right) {
+	function delete_(range) {
+		fixupRange(range, function delete_(range, left, right) {
 			var remove = function (node) {
 				Mutation.removePreservingRange(node, range);
 			};
@@ -1378,7 +1268,7 @@ define([
 				postprocess: function () {
 					var above = Boundaries.fromRangeStart(range);
 					var below = Boundaries.fromRangeEnd(range);
-					Html.removeBreak(above, below, context);
+					var overrides = Html.removeBreak(above, below);
 					var pos = Cursors.createFromBoundary(above[0], above[1]);
 					left.setFrom(pos);
 					right.setFrom(pos);
@@ -1394,19 +1284,16 @@ define([
 	 * https://dvcs.w3.org/hg/editing/raw-file/tip/editing.html#splitting-a-node-list's-parent
 	 * http://lists.whatwg.org/htdig.cgi/whatwg-whatwg.org/2011-May/031700.html
 	 *
-	 * @param {Range} liveRange
-	 * @param {object} context
+	 * @param {Range}   liveRange
+	 * @param {object}  context
 	 * @param {boolean} linebreak
 	 */
 	function break_(liveRange, context, linebreak) {
 		var range = Ranges.collapseToEnd(StableRange(liveRange));
-		Mutation.splitTextContainers(range);
 		var op = linebreak ? Html.insertLineBreak : Html.insertBreak;
-		var boundary = op(
-			Boundaries.normalize(Boundaries.fromRangeStart(range)),
-			context
-		);
+		var boundary = op(Boundaries.fromRangeStart(range), context);
 		Boundaries.setRange(liveRange, boundary, boundary);
+		return boundary;
 	}
 
 	function insert(liveRange, insertion) {
@@ -1416,15 +1303,15 @@ define([
 				return Content.allowsNesting(node.nodeName, insertion.nodeName);
 			}
 		});
-		var boundary = Mutation.insertNodeAtBoundary(insertion, Boundaries.fromRangeStart(range));
-		Boundaries.setRange(
-			liveRange,
-			boundary,
-			Boundaries.create(
-				Boundaries.container(boundary),
-				Boundaries.offset(boundary) + 1
-			)
+		var boundary = Mutation.insertNodeAtBoundary(
+			insertion,
+			Boundaries.fromRangeStart(range)
 		);
+		Boundaries.setRange(liveRange, boundary, Boundaries.create(
+			Boundaries.container(boundary),
+			Boundaries.offset(boundary) + 1
+		));
+		return boundary;
 	}
 
 	return {
