@@ -431,8 +431,14 @@ define([
 		until = until || Fn.returnFalse;
 		var next;
 		var node = start;
-		while (node) {
-			next = previous ? node.previousSibling : node.nextSibling;
+		var g = 99;
+		debugger;
+		while (--g && node) {
+			next = previous ? node.lastChild : node.firstChild;
+
+			if (!next) {
+				next = previous ? node.previousSibling : node.nextSibling;
+			}
 			if (next) {
 				if (until(next)) {
 					return null;
@@ -442,10 +448,23 @@ define([
 				}
 				node = next;
 			} else {
-				if (!node.parentNode || until(node.parentNode)) {
-					return null;
+				while (--g && node.parentNode) {
+					node = node.parentNode;
+					if (until(node)) {
+						return null;
+					}
+					var sibling = previous ? node.previousSibling : node.nextSibling 
+					if (sibling) {
+						if (until(sibling)) {
+							return null;
+						}
+						if (match(sibling)) {
+							return sibling;
+						}
+						node = sibling;
+						break;
+					}
 				}
-				node = node.parentNode;
 			}
 		}
 	}

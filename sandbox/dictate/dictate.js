@@ -75,7 +75,7 @@ define([
 		recognition.start();
 	}
 
-	var formatActions = {
+	var FORMAT_ACTIONS = {
 		'underline-style' : 'format',
 		'emphasis'        : 'format',
 		'strike'          : 'format',
@@ -87,11 +87,11 @@ define([
 		'left align'      : 'format'
 	};
 
-	var signals = [
+	var SIGNALS = [
 		'aloha', 'mahalo'
 	];
 
-	var verbs = [
+	var VERBS = [
 		'align',
 		'enter',
 		'insert',
@@ -142,8 +142,10 @@ define([
 		'bold', 'italic', 'underline-style', 'struck-through'
 	];
 
-	var corrections = {
-		// for slurred speech
+	/**
+	 * A map of phrases commonly miss-recognized.
+	 */
+	var phrase_corrections = {
 		'move'        : /\bwho\b/ig,
 		'move the'    : /\bmovie\b/ig,
 		'move it'     : /\bmoving\b/ig,
@@ -171,24 +173,27 @@ define([
 		'make'             : /^(format|color)\b/ig,
 		'$1-align'         : /\b(right|left) align(ed)?\b/ig,
 		' underline-style' : / underlined?\b/ig,
-		' to the $1'       : / (left|right|start|end|beginning)\b/ig,
-		' the $1'          : /\b(first|second|third|[a-z]+?th)\b/ig,
+		'the $1'          : /\b(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
 		'paste clipboard'  : /\bpaste\b/ig
 	};
 
-	var MISSING_PRONOUN = new RegExp('(' + verbs.join('|') + ')\\s+(' + nouns.join('|') + ')', 'g');
+	var MISSING_PRONOUN = new RegExp('(' + VERBS.join('|') + ')\\s+(' + nouns.join('|') + ')', 'g');
 
+	/**
+	 * Normalizes the given utterance by correcting common slurred words.
+	 *
+	 * @param  {String} speech
+	 * @return {String}
+	 */
 	function normalize(speech) {
-		for (var replacement in corrections) {
-			if (corrections.hasOwnProperty(replacement)) {
-				speech = speech.replace(corrections[replacement], replacement);
+		for (var replacement in phrase_corrections) {
+			if (phrase_corrections.hasOwnProperty(replacement)) {
+				speech = speech.replace(phrase_corrections[replacement], replacement);
 			}
 		}
-
 		speech = speech.replace(/ the\s+the /g, ' the ')
 		               .replace(/ to the\s+to the /, ' to the ')
 		               .replace(/ clipboard\s+(from )?(the )?clipboard /, ' clipboard ');
-
 		// insert "the" between verb and subject if pronoun is missing
 		return speech.replace(MISSING_PRONOUN, '$1 the $2');
 	}
@@ -265,11 +270,20 @@ define([
 		}
 	}
 
+	/**
+	 * Given a verb phrase object, determine what action name (and perhaps
+	 * object) of the imperative are.
+	 *
+	 * @param  {Object} phrase
+	 * @return {Object} action
+	 */
 	function extractAction(phrase) {
 		var action = phrase[0]['#text'];
-		if (formatActions[action]) {
+		if (FORMAT_ACTIONS[action]) {
+			// Because format actions require an object
+			// eg: action: format, object: red, subject: word
 			return {
-				action: formatActions[action],
+				action: FORMAT_ACTIONS[action],
 				object: action
 			};
 		}
@@ -283,14 +297,14 @@ define([
 			if (!isNoun(phrases[i])) {
 				continue;
 			}
-			var noun = parts.NP(phrases[i]);
+			var noun = PARTS.NP(phrases[i]);
 			if (i + 1 === phrases.length || !isAdjective(phrases[i + 1])) {
 				return noun;
 			}
 			// which `noun`
 			var bucket = getBucket(noun);
 			if (bucket) {
-				var adj = parts.ADJP(phrases[i + 1]);
+				var adj = PARTS.ADJP(phrases[i + 1]);
 				return noun + ':' + adj;
 			}
 			return noun;
@@ -300,7 +314,7 @@ define([
 	function extractPreposition(phrases) {
 		for (var i = 0; i < phrases.length; i++) {
 			if (isPreposition(phrases[i])) {
-				return parts.PP(phrases[i]);
+				return PARTS.PP(phrases[i]);
 			}
 		}
 	}
@@ -308,7 +322,7 @@ define([
 	function extractAdjective(phrases) {
 		for (var i = 0; i < phrases.length; i++) {
 			if (isAdjective(phrases[i])) {
-				return parts.ADJP(phrases[i]);
+				return PARTS.ADJP(phrases[i]);
 			}
 		}
 	}
@@ -327,9 +341,9 @@ define([
 		var conjunctions = phrase.NP;
 		for (var i = 0; i < conjunctions.length; i++) {
 			if (isAdjective(conjunctions[i])) {
-				ads.push(parts.ADJP(conjunctions[i]));
+				ads.push(PARTS.ADJP(conjunctions[i]));
 			} else if (isAdverb(conjunctions[i])) {
-				ads.push(parts.ADVP(conjunctions[i]));
+				ads.push(PARTS.ADVP(conjunctions[i]));
 			} else {
 				nouns.push(conjunctions[i]['#text']);
 			}
@@ -366,31 +380,32 @@ define([
 	}
 
 	function sentence(phrase) {
-		return compose(phrase);
+		return compose(phrase.S);
 	}
 
-	// http://www.chompchomp.com/terms/verbphrase.htm
-	// https://en.wikipedia.org/wiki/Verb_phrase
-	// https://en.wikipedia.org/wiki/Linguistic_typology
-	//
-	// Extracts action, subject, and (optional) object
-	//
-	// delete -> word
-	// [VP delete [NP selection NP] VP]
-	//
-	// format -> selection * bold
-	// [VP paint [NP the selection NP] [PP with [NP the color NP] [ADJP red ADJP] PP] VP]
-	//
-	// process("add squares to words")
-	// [S [VP add [NP squares NP] [PP to [NP words NP] PP] VP] S] 
-	//
-	// do(action) -> to(subject) * object?
+	/**
+	 * Extracts action, subject, and (optional) object.
+	 * do(action) -> to(subject) * object?
+	 *
+	 * http://www.chompchomp.com/terms/verbphrase.htm
+	 * https://en.wikipedia.org/wiki/Verb_phrase
+	 * https://en.wikipedia.org/wiki/Linguistic_typology
+	 *
+	 * delete -> word
+	 * [VP delete [NP selection NP] VP]
+	 *
+	 * format -> selection * bold
+	 * [VP paint [NP the selection NP] [PP with [NP the color NP] [ADJP red ADJP] PP] VP]
+	 *
+	 * process("add squares to words")
+	 * [S [VP add [NP squares NP] [PP to [NP words NP] PP] VP] S] 
+	 */
 	function verb(phrase) {
 		var parts = phrase.VP;
 		var action = extractAction(parts);
 		var constituents = parts.slice(1);
 		var subject = extractNoun(constituents);
-		// "align to the left"
+		// Because the subject may be implied (eg:"align to the left")
 		if (!subject) {
 			subject = 'selection';
 		}
@@ -409,7 +424,12 @@ define([
 		}
 	}
 
-	var parts = {
+	/**
+	 * Parts of speech tags mapped to functions to parse phrases.
+	 *
+	 * @type {string, function}
+	 */
+	var PARTS = {
 		'ADJP' : adjective,
 		'ADVP' : adverb,
 		'NP'   : noun,
@@ -418,7 +438,12 @@ define([
 		'VP'   : verb
 	};
 
-	var tags = [
+	/**
+	 * A list of parts of speech tags.
+	 *
+	 * @type {Array.<string>}
+	 */
+	var TAGS = [
 
 		// adjective phrase:
 		// headed (https://en.wikipedia.org/wiki/Head_(linguistics)) by adjective
@@ -453,13 +478,22 @@ define([
 		// verb phrase:
 		// contains verb as head along with complements such as noun phrases or prepositional phrases
 		// yields action
-		'VP'
+		'VP',
+
+		// participle
+		'PRT'
 	];
 
+	/**
+	 * Determine the given part's speech part tag.
+	 *
+	 * @param  {Object} part
+	 * @return {string}
+	 */
 	function getTag(part) {
-		for (var i = 0; i < tags.length; i++) {
-			if (part.hasOwnProperty(tags[i])) {
-				return tags[i];
+		for (var i = 0; i < TAGS.length; i++) {
+			if (part.hasOwnProperty(TAGS[i])) {
+				return TAGS[i];
 			}
 		}
 	}
@@ -468,13 +502,25 @@ define([
 		for (var i = 0; i < phrases.length; i++) {
 			var phrase = phrases[i];
 			var tag = getTag(phrase);
-			var parse = parts[tag];
+			var parse = PARTS[tag];
 			if (parse) {
-				return parse(phrase);
+				var command = parse(phrase);
+				if (!command.object && i + 1 < phrases.length && phrases[i + 1].hasOwnProperty('#text')) {
+					command.object = phrases[i + 1]['#text'];
+				}
+				return command;
 			}
 		}
 	}
 
+
+	/**
+	 * Given a DOM node, returns its structure in the form of an array of it's
+	 * text data.
+	 *
+	 * @param  {Node} dom
+	 * @return {Array}
+	 */
 	function xmlToArray(dom) {
 		if (3 === dom.nodeType) {
 			return dom.nodeValue;
@@ -491,12 +537,16 @@ define([
 		return arr;
 	}
 
-	var TAGS = '(' + tags.join('|') + ')';
-	var START_TAGS = new RegExp(' ?\\[' + TAGS + ' ', 'g');
-	var END_TAGS   = new RegExp(' ' + TAGS + '\\]',   'g');
+	var tags = '(' + TAGS.join('|') + ')';
+	var START_TAGS = new RegExp(' ?\\[' + tags + ' ', 'g');
+	var END_TAGS   = new RegExp(' ' + tags + '\\]',   'g');
 
 	/**
-	 * Parse constituent tree diagram
+	 * Parses the given constituent tree diagram from a string into an array of
+	 * data structures that map various parts of speech.
+	 *
+	 * @param  {string} diagram
+	 * @return {Array}
 	 */
 	function treebank(diagram) {
 		var div = document.createElement('div');
@@ -537,40 +587,43 @@ define([
 		return null;
 	}
 
-	var selectors = {
-		'paragraph'  : 'P',
+	/**
+	 * A list of selectable entities.
+	 *
+	 * @type {string, function(node):boolean}
+	 */
+	var SELECTORS = {
+		'paragraph'  : aloha.html.hasLinebreakingStyle,
+		'block'      : aloha.html.hasLinebreakingStyle,
 		'heading'    : 'H1,H2,H3,H4,H5,H6',
 		'link'       : 'A',
 		'image'      : 'IMG',
-		'list'       : 'OL,UL',
+		'list'       : 'OL LI:first, UL LI:first',
 		'list item'  : 'LI',
-		'list items' : 'LI',
-		'block'      : 'DIV,P,IMG,H1,H2,H3,H4,H5,H6'
+		'word'       : '__word__',
+		'character'  : '__char__'
 	}
 
-	function determineContainer(part, state) {
-		var context = state.context;
-		var name = selectors[part];
-		return context.querySelector(name);
-	}
-
-	function nextContainer(selectors, state) {
-		var names = selectors.split(',');
-		var boundaries = aloha.boundaries.get();
-		if (!boundaries) {
-			boundaries = [
-				null,
-				aloha.boundaries.fromNode(document.body.firstChild)
-			];
-		}
-		var next = aloha.boundaries.nextWhile(boundaries[1], function (boundary) {
-			return !aloha.arrays.contains(names, aloha.boundaries.container(boundary).nodeName);
+	function nextContainer(selector, state) {
+		return aloha.traversing.nextNonAncestor(aloha.html.nextNode(state.end), false, function (node) {
+			return !aloha.html.isGroupContainer(node) && selector(node);
 		});
-		return aloha.boundaries.container(next);
+	}
+
+	function determineSelector(part) {
+		var selector = SELECTORS[part];
+		if ('string' === typeof selector) {
+			var names = selector.split(',');
+			return function (node) {
+				console.log(node);
+				return aloha.arrays.contains(names, node.nodeName);
+			};
+		}
+		return selector;
 	}
 
 	function parsePosition(where, state) {
-		where = where.replace(/^(the|this|that) /, '');
+		where = removeArticle(where);
 		var parts = where.split(':');
 		if (1 === parts.length) {
 			parts = where.split(' ');
@@ -593,7 +646,7 @@ define([
 				} else if ('previous' === part) {
 					getContainer = prevContainer;
 				} else {
-					selector = selectors[part];
+					selector = determineSelector(part);
 				}
 				if (selector && getContainer) {
 					break;
@@ -610,15 +663,14 @@ define([
 			container = getContainer(selector, state);
 		}
 
-		container = container || state.context;
+		container = container || aloha.boundaries.container(state.start);
 		var offset = getOffset ? getOffset(state.context) : 0;
 
 		return aloha.boundaries.create(container, offset);
 	}
 
-	function determineSubject(subject) {
-		subject = subject.replace(/^(the|this|that) /, '');
-		return subject;
+	function removeArticle(subject) {
+		return subject.replace(/^(the|this|that|those) /, '');
 	}
 
 	function selectNode(node) {
@@ -641,7 +693,7 @@ define([
 		if (state.subject === subject) {
 			return state.resolved;
 		}
-		var selector =  selectors[subject];
+		var selector =  SELECTORS[subject];
 		if (selector) {
 			return selectNode($(selector, state.context)[0]);
 		}
@@ -667,25 +719,27 @@ define([
 	aloha.dom.addClass(caret, 'aloha-caret-blink');
 
 
-	function move(subject, where) {
+	/**
+	 * Moves `subject` to `where`.
+	 */
+	function move(subject, where, state) {
 		if (!subject) {
 			console.error('nothing to move');
 		}
 		if (!where) {
 			console.error('no where to move');
 		}
-		subject = determineSubject(subject);
+		subject = removeArticle(subject);
 		if ('selection' !== subject) {
 			console.warn('subject "' + subject + '" not found');
 			return;
 		}
 		var position = parsePosition(where, state);
-		aloha.selections.show(caret, position);
-		aloha.boundaries.select(position);
-		state.context = aloha.boundaries.container(position);
 		state.subject = subject;
-		state.resolved = state.context;
-		state.context.focus();
+		return {
+			start : position,
+			end   : position
+		};
 	}
 
 	function determineStyling(style) {
@@ -713,7 +767,7 @@ define([
 	}
 
 	function make(subject, formatting) {
-		subject = determineSubject(subject);
+		subject = removeArticle(subject);
 		var boundaries = resolveSubject(subject, state);
 		if (!boundaries) {
 			console.error('subject "' + subject + '" not found');
@@ -737,7 +791,7 @@ define([
 	}
 
 	function _delete(subject) {
-		subject = determineSubject(subject);
+		subject = removeArticle(subject);
 		var object = resolveSubject(subject, state);
 		var boundaries;
 		if (object.nodeName) {
@@ -755,7 +809,7 @@ define([
 	}
 
 	function select(subject, where) {
-		var subject = determineSubject(subject);
+		var subject = removeArticle(subject);
 		var start = parsePosition(subject, state);
 		var end = aloha.boundaries.fromEndOfNode(aloha.boundaries.container(start));
 		console.warn(subject);
@@ -765,15 +819,7 @@ define([
 		state.resolved = [start, end];
 	}
 
-	var state = {
-		resolve : null,
-		subject : null,
-		start   : null,
-		end     : null,
-		context : document.querySelector('.aloha-editable')
-	};
-
-	var actions = {
+	var ACTIONS = {
 		'go'     : move,
 		'move'   : move,
 		'make'   : make,
@@ -781,13 +827,17 @@ define([
 		'select' : select
 	};
 
-	function run(instruction) {
-		var action = actions[instruction.action];
+	function perform(instruction, state) {
+		var action = ACTIONS[instruction.action];
 		if (!action) {
 			console.error('action "' + instruction.action + '" not supported');
-			return;
+			return state;
 		}
-		action(instruction.subject, instruction.object);
+		var range = action(instruction.subject, instruction.object, state);
+		return {
+			start : range.start,
+			end   : range.end
+		};
 	}
 
 	var initialized = false;
@@ -803,25 +853,64 @@ define([
 
 		var parse = Module.cwrap('diagram', 'string', ['string']);
 
-		var process = function (utterance) {
-			utterance = normalize(utterance);
-			var diagram = parse(utterance).trim();
+		var process = function (utterance, state) {
+			var speech = normalize(utterance);
+			var diagram = parse(speech).trim();
 			var tree = treebank(diagram);
 			var instruction = compose(tree);
-			console.log(utterance);
-			console.log(diagram);
-			console.log(instruction);
-			console.log('-----------------------------------');
-			if (instruction) {
-				run(instruction);
-			} else {
+			if (!instruction) {
 				console.error(utterance, diagram);
+				return;
 			}
+			state = perform(instruction, state);
+			console.warn(aloha.boundarymarkers.hint([state.start, state.end]));
+			aloha.boundaries.select(state.start, state.end);
+			aloha.boundaries.container(state.end).focus();
+			return state;
 		};
 
-		listen(process);
+		var editable = document.querySelector('.aloha-editable');
+		var state = {
+			resolve : null,
+			subject : null,
+			start   : aloha.boundaries.create(editable, 0),
+			end     : aloha.boundaries.create(editable, 0)
+		};
+
+		window.state = state;
+		window.process = process;
+
+		/*
+		listen(function (utterance) {
+			state = process(utterance, state);
+		});
+		*/
 
 		var commands = [
+			//'move the image to the next paragraph',
+			// go to
+			/*
+			'go to start',
+			'go to next paragraph',
+			'go to the next paragraph',
+			'go to list',  // the first one in the view port
+			*/
+			'go to next list' /*,
+			'go to next image',
+
+			// go
+			'go forward',
+			'go backwards',
+
+			// skip
+			'skip',
+			'skip word'//,
+			/*
+			'skip sentence',
+			'skip character',
+			'skip over'
+
+			/*
 			'move to first paragraph',
 			'move to end of sentence',
 			'move the selection to the start',
@@ -860,17 +949,16 @@ define([
 			'paste',
 			'paste here',
 			'paste from clipboard here'
+			*/
 		];
 
-		/*
 		var interval = setInterval(function () {
 			if (commands.length) {
-				process(commands.shift());
+				state = process(commands.shift(), state);
 			} else {
 				clearInterval(interval);
 			}
 		}, 10);
-		*/
 
 		// process("paste clipboard content at current selection"); //problematic
 		// process('select paragraph, and format the selection bold'); // problematic
