@@ -9,6 +9,10 @@ define([
 		return context.querySelectorAll(selector);
 	}
 
+	function commonContainer(start, end) {
+		return aloha.ranges.fromBoundaries(start, end).commonAncestorContainer;
+	}
+
 	// http://www.kaisdukes.com/papers/spatial-ltc2013.pdf */
 	// http://en.wikipedia.org/wiki/Brown_Corpus#Part-of-speech_tags_used
 	// http://www.link.cs.cmu.edu/link/dict/summarize-links.html
@@ -102,13 +106,13 @@ define([
 		'undo', 'redo',
 		'repeat',
 		'dictate',
-		'goto', 'move', 'select',
+		'goto', 'move', 'select', 'skip',
 		'expand', 'collapse',
 		'prepend', 'append',
 		'format', 'make'
 	];
 
-	var nouns = [
+	var NOUNS = [
 		// remove color
 		'color',
 
@@ -145,7 +149,8 @@ define([
 	/**
 	 * A map of phrases commonly miss-recognized.
 	 */
-	var phrase_corrections = {
+	var PHRASE_CORRECTIONS = {
+		''            : /\b(now|then|let's)\b/,
 		'move'        : /\bwho\b/ig,
 		'move the'    : /\bmovie\b/ig,
 		'move it'     : /\bmoving\b/ig,
@@ -170,14 +175,15 @@ define([
 
 		// substitutes for words that are not in the stanford english corpse
 		// "make" is a better substitue for "format" than "decorate" is
+		'move to $1'       : /^(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
+		'the $1'           : /\b(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
 		'make'             : /^(format|color)\b/ig,
 		'$1-align'         : /\b(right|left) align(ed)?\b/ig,
 		' underline-style' : / underlined?\b/ig,
-		'the $1'          : /\b(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
 		'paste clipboard'  : /\bpaste\b/ig
 	};
 
-	var MISSING_PRONOUN = new RegExp('(' + VERBS.join('|') + ')\\s+(' + nouns.join('|') + ')', 'g');
+	var MISSING_PRONOUN = new RegExp('(' + VERBS.join('|') + ')\\s+(' + NOUNS.join('|') + ')', 'g');
 
 	/**
 	 * Normalizes the given utterance by correcting common slurred words.
@@ -186,9 +192,9 @@ define([
 	 * @return {String}
 	 */
 	function normalize(speech) {
-		for (var replacement in phrase_corrections) {
-			if (phrase_corrections.hasOwnProperty(replacement)) {
-				speech = speech.replace(phrase_corrections[replacement], replacement);
+		for (var replacement in PHRASE_CORRECTIONS) {
+			if (PHRASE_CORRECTIONS.hasOwnProperty(replacement)) {
+				speech = speech.replace(PHRASE_CORRECTIONS[replacement], replacement);
 			}
 		}
 		speech = speech.replace(/ the\s+the /g, ' the ')
@@ -593,84 +599,94 @@ define([
 	 * @type {string, function(node):boolean}
 	 */
 	var SELECTORS = {
-		'paragraph'  : aloha.html.hasLinebreakingStyle,
-		'block'      : aloha.html.hasLinebreakingStyle,
-		'heading'    : 'H1,H2,H3,H4,H5,H6',
-		'link'       : 'A',
-		'image'      : 'IMG',
-		'list'       : 'OL LI:first, UL LI:first',
-		'list item'  : 'LI',
-		'word'       : '__word__',
-		'character'  : '__char__'
+		'paragraph' : aloha.html.hasLinebreakingStyle,
+		'block'     : aloha.html.hasLinebreakingStyle,
+		'heading'   : ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+		'link'      : ['A'],
+		'image'     : ['IMG'],
+		// First list item in list
+		'list'      : function (node) {
+			return aloha.html.isListItem(node)
+			    && (1 === aloha.dom.prevSiblings(node).filter(aloha.html.isListItem).length);
+		},
+		'list item' : ['LI'],
+		'word'      : 'word',
+		'character' : 'char'
 	}
 
-	function nextContainer(selector, state) {
-		return aloha.traversing.nextNonAncestor(aloha.html.nextNode(state.end), false, function (node) {
-			return !aloha.html.isGroupContainer(node) && selector(node);
-		});
+	function prevContainer(selector, boundary) {
+		var reference = aloha.html.prevNode(boundary);
+		return aloha.traversing.nextNonAncestor(reference, false, function (node) {
+			return reference !== node && !aloha.html.isGroupContainer(node) && selector(node);
+		}, aloha.dom.isEditingHost);
+	}
+
+	function nextContainer(selector, boundary) {
+		var reference = aloha.html.nextNode(boundary);
+		return aloha.traversing.nextNonAncestor(reference, true, function (node) {
+			return reference !== node && !aloha.html.isGroupContainer(node) && selector(node);
+		}, aloha.dom.isEditingHost);
 	}
 
 	function determineSelector(part) {
 		var selector = SELECTORS[part];
-		if ('string' === typeof selector) {
-			var names = selector.split(',');
-			return function (node) {
-				console.log(node);
-				return aloha.arrays.contains(names, node.nodeName);
-			};
+		var type = typeof selector;
+		if ('function' === type || 'string' === type) {
+			return selector;
 		}
-		return selector;
+		return function (node) {
+			return aloha.arrays.contains(selector, node.nodeName);
+		};
 	}
 
 	function parsePosition(where, state) {
-		where = removeArticle(where);
+		where = removeArticle(where).trim();
 		var parts = where.split(':');
 		if (1 === parts.length) {
 			parts = where.split(' ');
 		}
-		var getContainer;
-		var selector;
-		var getOffset;
+		var unit;
+		var direction;
 
 		for (var i = 0; i < parts.length; i++) {
 			var part = parts[i];
-			if (!getOffset) {
-				getOffset = determineOffset(part);
-				if (getOffset) {
-					continue;
-				}
+			switch (parts[i]) {
+			case 'next':
+				direction = 'forward';
+				break;
+			case 'previous':
+				direction = 'backward';
+				break;
+			default:
+				unit = determineSelector(part);
 			}
-			if (!selector || !getContainer) {
-				if ('next' === part) {
-					getContainer = nextContainer;
-				} else if ('previous' === part) {
-					getContainer = prevContainer;
-				} else {
-					selector = determineSelector(part);
-				}
-				if (selector && getContainer) {
-					break;
-				}
+			if (direction && unit) {
+				break;
 			}
 		}
 
-		var container;
-		if (selector && !getContainer) {
-			container =  $(selector, state.context)[0];
+		switch (unit) {
+		case 'word':
+			return 'backward' === direction
+				 ? aloha.html.prev(state.start, 'word')
+				 : aloha.html.next(state.end,   'word');
+		case 'character':
+			return 'backward' === direction
+				 ? aloha.html.prev(state.start, 'char')
+				 : aloha.html.next(state.end,   'char');
+		default:
+			var container = 'backward' === direction
+						  ? prevContainer(unit, state.start)
+						  : nextContainer(unit, state.end);
+			if (container) {
+				return aloha.boundaries.create(container, 0);
+			}
 		}
-
-		if (selector && getContainer) {
-			container = getContainer(selector, state);
-		}
-
-		container = container || aloha.boundaries.container(state.start);
-		var offset = getOffset ? getOffset(state.context) : 0;
-
-		return aloha.boundaries.create(container, offset);
+		return 'backward' === direction ? state.start : state.end;
 	}
 
 	function removeArticle(subject) {
-		return subject.replace(/^(the|this|that|those) /, '');
+		return subject.replace(/^(a|the|this|that|those) /, '');
 	}
 
 	function selectNode(node) {
@@ -695,13 +711,13 @@ define([
 		}
 		var selector =  SELECTORS[subject];
 		if (selector) {
-			return selectNode($(selector, state.context)[0]);
+			return selectNode($(selector, commonContainer(state.start, state.end))[0]);
 		}
 		switch (subject) {
 		case 'next':
-			return selectNode(nextContainer(state.resolved.nodeName, state));
+			return selectNode(nextContainer(state.resolved.nodeName, state.end));
 		case 'previous':
-			return selectNode(prevContainer(state.resolved.nodeName, state));
+			return selectNode(prevContainer(state.resolved.nodeName, state.start));
 		case 'it':
 		case 'them':
 		case 'them all':
@@ -729,7 +745,7 @@ define([
 		if (!where) {
 			console.error('no where to move');
 		}
-		subject = removeArticle(subject);
+		subject = removeArticle(subject).trim();
 		if ('selection' !== subject) {
 			console.warn('subject "' + subject + '" not found');
 			return;
@@ -822,12 +838,13 @@ define([
 	var ACTIONS = {
 		'go'     : move,
 		'move'   : move,
+		'skip'   : move,
 		'make'   : make,
 		'delete' : _delete,
 		'select' : select
 	};
 
-	function perform(instruction, state) {
+	function execute(instruction, state) {
 		var action = ACTIONS[instruction.action];
 		if (!action) {
 			console.error('action "' + instruction.action + '" not supported');
@@ -862,7 +879,7 @@ define([
 				console.error(utterance, diagram);
 				return;
 			}
-			state = perform(instruction, state);
+			state = execute(instruction, state);
 			console.warn(aloha.boundarymarkers.hint([state.start, state.end]));
 			aloha.boundaries.select(state.start, state.end);
 			aloha.boundaries.container(state.end).focus();
@@ -871,10 +888,8 @@ define([
 
 		var editable = document.querySelector('.aloha-editable');
 		var state = {
-			resolve : null,
-			subject : null,
-			start   : aloha.boundaries.create(editable, 0),
-			end     : aloha.boundaries.create(editable, 0)
+			start : aloha.boundaries.create(editable, 0),
+			end   : aloha.boundaries.create(editable, 0)
 		};
 
 		window.state = state;
@@ -954,7 +969,7 @@ define([
 
 		var interval = setInterval(function () {
 			if (commands.length) {
-				state = process(commands.shift(), state);
+				window.state = process(commands.shift(), state);
 			} else {
 				clearInterval(interval);
 			}

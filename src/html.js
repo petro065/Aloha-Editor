@@ -30,6 +30,7 @@ define([
 		isRendered                : Elements.isRendered,
 		isUnrendered              : Elements.isUnrendered,
 		isUnrenderedWhitespace    : Elements.isUnrenderedWhitespace,
+		isListItem                : Elements.isListItem,
 		isListContainer           : Elements.isListContainer,
 		isTableContainer          : Elements.isTableContainer,
 		isGroupContainer          : Elements.isGroupContainer,

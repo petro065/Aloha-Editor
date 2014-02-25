@@ -1006,7 +1006,8 @@ define([
 			return !NOT_WSP.test(Boundaries.container(boundary).data.substr(Boundaries.offset(boundary)));
 		}
 		var node = Boundaries.nodeAfter(boundary);
-		var next = Dom.nextWhile(node, Elements.isUnrendered);
+		var next = node.nextSibling
+		        && Dom.nextWhile(node.nextSibling, Elements.isUnrendered);
 		// foo|<br></p> or foo|<i>bar</i>
 		return !next || next === node;
 	}

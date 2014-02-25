@@ -415,45 +415,37 @@ define([
 	 * Returns the nearest node (in the document order) to the given node that
 	 * is not an ancestor.
 	 *
-	 * @param {DOMObject} start
-	 * @param {Boolean} previous
-	 *        If true, will look for the nearest preceding node, otherwise the
-	 *        nearest subsequent node.
-	 * @param {Function(DOMObject):Boolean} match
-	 * @param {Function(DOMObject):Boolean} until
-	 *        (Optional) Predicate, which will be applied to each node in the
-	 *        traversal step.  If this function returns true, traversal will
-	 *        terminal and will return null.
-	 * @return {DOMObject}
+	 * @param  {Node}    start
+	 * @param  {boolean} forward
+	 *         If true, will look for the nearest succeeding node, otherwise
+	 *         the nearest subsequent node.
+	 * @param  {function(Node):boolean} match
+	 * @param  {function(Node):boolean} until
+	 *         (Optional) Predicate, which will be applied to each node in the
+	 *         traversal step.  If this function returns true, traversal will
+	 *         terminal and will return null.
+	 * @return {Node}
 	 */
-	function nextNonAncestor(start, previous, match, until) {
+	function nextNonAncestor(start, forward, match, until) {
 		match = match || Fn.returnTrue;
 		until = until || Fn.returnFalse;
 		var next;
+		var parent;
+		var sibling;
 		var node = start;
-		var g = 99;
-		debugger;
-		while (--g && node) {
-			next = previous ? node.lastChild : node.firstChild;
-
+		while (node) {
+			next = forward ? node.firstChild : node.lastChild;
 			if (!next) {
-				next = previous ? node.previousSibling : node.nextSibling;
+				next = forward ? node.nextSibling: node.previousSibling;
 			}
-			if (next) {
-				if (until(next)) {
-					return null;
-				}
-				if (match(next)) {
-					return next;
-				}
-				node = next;
-			} else {
-				while (--g && node.parentNode) {
-					node = node.parentNode;
-					if (until(node)) {
+			if (!next) {
+				parent = node;
+				while (parent.parentNode) {
+					parent = parent.parentNode;
+					if (until(parent)) {
 						return null;
 					}
-					var sibling = previous ? node.previousSibling : node.nextSibling 
+					sibling = forward ? parent.nextSibling : parent.previousSibling; 
 					if (sibling) {
 						if (until(sibling)) {
 							return null;
@@ -461,11 +453,18 @@ define([
 						if (match(sibling)) {
 							return sibling;
 						}
-						node = sibling;
+						next = sibling;
 						break;
 					}
 				}
 			}
+			if (!next || until(next)) {
+				return null;
+			}
+			if (match(next)) {
+				return next;
+			}
+			node = next;
 		}
 	}
 
@@ -497,9 +496,26 @@ define([
 		return nodes;
 	}
 
+	/**
+	 * Returns a non-live list of the given node and all it's preceeding
+	 * siblings until the predicate returns true.
+	 *
+	 * @param  {Node} node
+	 * @param  {function(Node):boolean}
+	 * @return {Array.<Node>}
+	 */
+	function prevSiblings(node, until) {
+		var nodes = [];
+		stepNextUntil(node, function (next) {
+			nodes.push(next);
+		}, prevSibling, until || Fn.returnFalse);
+		return nodes;
+	}
+
 	return {
 		query                        : query,
 		nextSiblings                 : nextSiblings,
+		prevSiblings                 : prevSiblings,
 		nextWhile                    : nextWhile,
 		prevWhile                    : prevWhile,
 		upWhile                      : upWhile,

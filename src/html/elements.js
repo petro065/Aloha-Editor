@@ -117,7 +117,7 @@ define([
 	 * @param  {Node} node
 	 * @return {boolean}
 	 */
-	function isListItems(node) {
+	function isListItem(node) {
 		return LIST_ITEMS[node.nodeName];
 	}
 
@@ -404,7 +404,7 @@ define([
 		isRendered                         : isRendered,
 		isUnrendered                       : isUnrendered,
 		isUnrenderedWhitespace             : isUnrenderedWhitespace,
-		isListItems                        : isListItems,
+		isListItem                         : isListItem,
 		isListContainer                    : isListContainer,
 		isTableContainer                   : isTableContainer,
 		isGroupContainer                   : isGroupContainer,

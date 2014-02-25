@@ -286,6 +286,7 @@ define([
 
 		query                        : Traversing.query,
 		nextSiblings                 : Traversing.nextSiblings,
+		prevSiblings                 : Traversing.prevSiblings,
 		nextWhile                    : Traversing.nextWhile,
 		nextSibling                  : Traversing.nextSibling,
 		prevWhile                    : Traversing.prevWhile,
