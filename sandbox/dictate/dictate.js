@@ -6,7 +6,7 @@ define([
 	'use strict';
 
 	function $(selector, context) {
-		return context.querySelectorAll(selector);
+		return aloha.arrays.coerce(context.querySelectorAll(selector));
 	}
 
 	function commonContainer(start, end) {
@@ -131,7 +131,6 @@ define([
 		'item',
 		'element',
 		'header',
-		'heading',
 		'link',
 
 		'selection',
@@ -151,6 +150,7 @@ define([
 	 */
 	var PHRASE_CORRECTIONS = {
 		''            : /\b(now|then|let's)\b/,
+		'header'      : /\bheading\b/,
 		'move'        : /\bwho\b/ig,
 		'move the'    : /\bmovie\b/ig,
 		'move it'     : /\bmoving\b/ig,
@@ -175,6 +175,7 @@ define([
 
 		// substitutes for words that are not in the stanford english corpse
 		// "make" is a better substitue for "format" than "decorate" is
+		'move to next'     : /\bskip\b/,
 		'move to $1'       : /^(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
 		'the $1'           : /\b(first|second|third|[a-z]+?th|last|left|right|start|end|beginning|next|previous)\b/ig,
 		'make'             : /^(format|color)\b/ig,
@@ -427,7 +428,7 @@ define([
 			action  : action,
 			subject : subject,
 			object  : object
-		}
+		};
 	}
 
 	/**
@@ -519,7 +520,6 @@ define([
 		}
 	}
 
-
 	/**
 	 * Given a DOM node, returns its structure in the form of an array of it's
 	 * text data.
@@ -561,36 +561,19 @@ define([
 	}
 
 	var positionalAdj = {
-		'first'   : 1,
-		'second'  : 2,
-		'third'   : 3,
-		'fourth'  : 4,
-		'fifth'   : 5,
-		'sixth'   : 6,
-		'seventh' : 7,
-		'eigth'   : 8,
-		'ninth'   : 9
+		'first'   : 0,
+		'second'  : 1,
+		'third'   : 2,
+		'fourth'  : 3,
+		'fifth'   : 4,
+		'sixth'   : 5,
+		'seventh' : 6,
+		'eigth'   : 7,
+		'ninth'   : 8
 	};
 
-	function determineOffset(part) {
-		if (positionalAdj[part]) {
-			var offset = positionalAdj[part];
-			return function () {
-				return offset;
-			};
-		}
-		switch (part) {
-		case 'start':
-		case 'beginning':
-			return function () {
-				return 0;
-			};
-		case 'end':
-			return function (node) {
-				return aloha.dom.nodeLength(node);
-			}
-		}
-		return null;
+	function determineIndex(part) {
+		return positionalAdj[part];
 	}
 
 	/**
@@ -601,7 +584,7 @@ define([
 	var SELECTORS = {
 		'paragraph' : aloha.html.hasLinebreakingStyle,
 		'block'     : aloha.html.hasLinebreakingStyle,
-		'heading'   : ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
+		'header'    : ['H1', 'H2', 'H3', 'H4', 'H5', 'H6'],
 		'link'      : ['A'],
 		'image'     : ['IMG'],
 		// First list item in list
@@ -630,6 +613,9 @@ define([
 
 	function determineSelector(part) {
 		var selector = SELECTORS[part];
+		if (!selector) {
+			return;
+		};
 		var type = typeof selector;
 		if ('function' === type || 'string' === type) {
 			return selector;
@@ -639,17 +625,23 @@ define([
 		};
 	}
 
+	function removeArticle(subject) {
+		return subject.replace(/^(a|the|this|that|those) /, '').trim();
+	}
+
 	function parsePosition(where, state) {
-		where = removeArticle(where).trim();
+		where = removeArticle(where);
 		var parts = where.split(':');
 		if (1 === parts.length) {
 			parts = where.split(' ');
 		}
 		var unit;
 		var direction;
-
+		var index;
+		var selector;
 		for (var i = 0; i < parts.length; i++) {
 			var part = parts[i];
+			index = determineIndex(parts[i]);
 			switch (parts[i]) {
 			case 'next':
 				direction = 'forward';
@@ -658,22 +650,62 @@ define([
 				direction = 'backward';
 				break;
 			default:
-				unit = determineSelector(part);
+				if (!unit) {
+					selector = determineSelector(part);
+					if (selector) {
+						unit = selector;
+					}
+				}
 			}
 			if (direction && unit) {
 				break;
 			}
 		}
-
+		if (!unit) {
+			return 'backward' === direction ? state.start : state.end;
+		}
+		if ('number' === typeof index) {
+			var boundary = state.end
+			if ('word' === unit) {
+				do {
+					boundary = aloha.html.next(boundary, 'word');
+				} while (index--);
+				return boundary;
+			}
+			var editable = aloha.dom.upWhile(
+				aloha.boundaries.container(boundary),
+				aloha.fn.complement(aloha.dom.isEditingHost)
+			);
+			var containers = $('*', editable).filter(unit);
+			return (containers.length > index)
+			     ? aloha.boundaries.create(containers[index], 0)
+			     : state.end;
+		}
 		switch (unit) {
 		case 'word':
-			return 'backward' === direction
+			var boundary = 'backward' === direction
 				 ? aloha.html.prev(state.start, 'word')
-				 : aloha.html.next(state.end,   'word');
+				 : aloha.html.next(state.end, 'word');
+			if (aloha.boundaries.isAtStart(boundary) || aloha.boundaries.isAtEnd(boundary)) {
+				return boundary;
+			}
+			var container = aloha.boundaries.container(boundary);
+			var offset = aloha.boundaries.offset(boundary)
+			if (aloha.dom.isTextNode(container)) {
+				var chr = 'backward' === direction
+				        ? container.data.charAt(offset + 1)
+				        : container.data.charAt(offset - 1);
+				if (aloha.strings.WHITE_SPACE.test(chr)) {
+					return 'backward' === direction
+						 ? aloha.html.prev(boundary, 'word')
+						 : aloha.html.next(boundary, 'word');
+				}
+			}
+			return boundary;
 		case 'character':
 			return 'backward' === direction
 				 ? aloha.html.prev(state.start, 'char')
-				 : aloha.html.next(state.end,   'char');
+				 : aloha.html.next(state.end, 'char');
 		default:
 			var container = 'backward' === direction
 						  ? prevContainer(unit, state.start)
@@ -683,10 +715,6 @@ define([
 			}
 		}
 		return 'backward' === direction ? state.start : state.end;
-	}
-
-	function removeArticle(subject) {
-		return subject.replace(/^(a|the|this|that|those) /, '');
 	}
 
 	function selectNode(node) {
@@ -751,7 +779,6 @@ define([
 			return;
 		}
 		var position = parsePosition(where, state);
-		state.subject = subject;
 		return {
 			start : position,
 			end   : position
@@ -824,15 +851,33 @@ define([
 		aloha.editing.delete(range, editable);
 	}
 
-	function select(subject, where) {
-		var subject = removeArticle(subject);
-		var start = parsePosition(subject, state);
-		var end = aloha.boundaries.fromEndOfNode(aloha.boundaries.container(start));
-		console.warn(subject);
-		console.log(aloha.boundarymarkers.hint([start, end]));
-		aloha.boundaries.select(start, end);
-		state.subject  = subject;
-		state.resolved = [start, end];
+	// this word
+	// the next 2 words
+	// the previous paragraph
+	function select(subject, where, state) {
+		where = removeArticle(subject);
+		var parts = where.split(':');
+		if (1 === parts.length) {
+			parts = where.split(' ');
+		}
+		var start, end;
+		if (aloha.arrays.contains(parts, 'word')) {
+			var direction = aloha.arrays.contains(parts, 'previous') ? 'backwards' : 'forwards';
+			if ('forwards' === direction) {
+				start = state.end;
+				end = parsePosition(subject, state);
+			} else {
+				start = parsePosition(subject, state);
+				end = state.start;
+			}
+		} else {
+			start = parsePosition(subject, state);
+			end = aloha.boundaries.fromEndOfNode(aloha.boundaries.container(start));
+		}
+		return {
+			start : start,
+			end   : end
+		};
 	}
 
 	var ACTIONS = {
@@ -852,12 +897,33 @@ define([
 		}
 		var range = action(instruction.subject, instruction.object, state);
 		return {
+			last  : instruction,
 			start : range.start,
 			end   : range.end
 		};
 	}
 
 	var initialized = false;
+
+	function repeat(state) {
+		return (state.last) ? execute(state.last, state) : state;
+	}
+
+	var QUICK_ACTIONS = {
+		'again'     : repeat,
+		'repeat'    : repeat,
+		'once more' : repeat
+	};
+
+	function showSelection(state) {
+		console.warn(aloha.boundarymarkers.hint([state.start, state.end]));
+		aloha.boundaries.select(state.start, state.end);
+		var container = aloha.boundaries.container(state.end);
+		if (aloha.dom.isTextNode(container)) {
+			container = container.parentNode;
+		}
+		container.focus();
+	}
 
 	function init() {
 		if (initialized) {
@@ -872,6 +938,14 @@ define([
 
 		var process = function (utterance, state) {
 			var speech = normalize(utterance);
+
+			var action = QUICK_ACTIONS[speech];
+			if (action) {
+				state = action(state);
+				showSelection(state);
+				return state;
+			}
+
 			var diagram = parse(speech).trim();
 			var tree = treebank(diagram);
 			var instruction = compose(tree);
@@ -880,9 +954,7 @@ define([
 				return;
 			}
 			state = execute(instruction, state);
-			console.warn(aloha.boundarymarkers.hint([state.start, state.end]));
-			aloha.boundaries.select(state.start, state.end);
-			aloha.boundaries.container(state.end).focus();
+			showSelection(state);
 			return state;
 		};
 
@@ -904,32 +976,33 @@ define([
 		var commands = [
 			//'move the image to the next paragraph',
 			// go to
+			'go to fourth paragraph',
+			'select the next word',
+			'again',
 			/*
 			'go to start',
 			'go to next paragraph',
 			'go to the next paragraph',
 			'go to list',  // the first one in the view port
-			*/
-			'go to next list' /*,
+			'go to the first heading',
+			'go to the fourth paragraph',
+			'go to the third list item',
+			'go to next list',
 			'go to next image',
 
 			// go
 			'go forward',
 			'go backwards',
-
 			// skip
-			'skip',
-			'skip word'//,
-			/*
+			//'skip',
+			'skip word',
 			'skip sentence',
 			'skip character',
 			'skip over'
 
-			/*
 			'move to first paragraph',
 			'move to end of sentence',
 			'move the selection to the start',
-			'move to the next list item',
 			'move to the next list item',
 
 			'make this paragraph bold',
@@ -969,7 +1042,7 @@ define([
 
 		var interval = setInterval(function () {
 			if (commands.length) {
-				window.state = process(commands.shift(), state);
+				window.state = process(commands.shift(), window.state);
 			} else {
 				clearInterval(interval);
 			}
