@@ -89,6 +89,16 @@ define([
 	}
 
 	/**
+	 * Returns a non-live array of all siblings of node.
+	 *
+	 * @param  {Node} node
+	 * @return {Array.<Node>}
+	 */
+	function siblings(node) {
+		return node.parentNode ? children(node.parentNode) : [];
+	}
+
+	/**
 	 * Calculates the positional index of the given node inside of its parent
 	 * element.
 	 *
@@ -353,9 +363,10 @@ define([
 	}
 
 	return {
-		Nodes : Nodes,
-		offset : offset,
+		Nodes    : Nodes,
+		offset   : offset,
 		children : children,
+		siblings : siblings,
 
 		nodeAtOffset : nodeAtOffset,
 		nthChild     : nthChild,
@@ -375,7 +386,7 @@ define([
 		isEmptyTextNode : isEmptyTextNode,
 		isSameNode      : isSameNode,
 
-		text : text,
+		text    : text,
 		hasText : hasText,
 
 		equals     : equals,

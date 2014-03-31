@@ -226,6 +226,7 @@ define([
 		clone                   : Nodes.clone,
 		text                    : Nodes.text,
 		children                : Nodes.children,
+		siblings                : Nodes.siblings,
 		nthChild                : Nodes.nthChild,
 		numChildren             : Nodes.numChildren,
 		nodeIndex               : Nodes.nodeIndex,
