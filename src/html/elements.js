@@ -9,14 +9,18 @@ define([
 	'html/styles',
 	'html/predicates',
 	'dom',
+	'arrays',
 	'cursors',
-	'strings'
+	'strings',
+	'boundaries'
 ], function HtmlElements(
 	Styles,
 	Predicates,
 	Dom,
+	Arrays,
 	Cursors,
-	Strings
+	Strings,
+	Boundaries
 ) {
 	'use strict';
 
@@ -198,6 +202,37 @@ define([
 		    || (node.nextSibling && Predicates.isBlockNode(node.nextSibling));
 	}
 
+	function isRenderedNode(node) {
+		// Because LI or TD are rendered even when empty
+		if (Predicates.isGroupedElement(node)) {
+			return true;
+		}
+		// BR or HR or IMG are rendered despite being empty
+		if (Predicates.isVoidNode(node)) {
+			return ('BR' === node.nodeName) ? isRenderedBr(node) : true;
+		}
+		// #text
+		if (Dom.isTextNode(node)) {
+			if (!isUnrenderedWhitespaceNoBlockCheck(node)) {
+				return true;
+			}
+			var parent = node.parentNode;
+			if (!parent || !Styles.hasLinebreakingStyle(parent)) {
+				return true;
+			}
+			var siblings = Arrays.split(Dom.siblings(node), function (sibling) {
+				return sibling === node;
+			});
+			var prev = siblings[0];
+			var next = siblings[1].slice(1);
+			return prev.filter(isRenderedNode).length > 0
+			    && next.filter(isRenderedNode).length > 0;
+		}
+		// Because with no visible children, a node is visually empty and
+		// unrendered
+		return Dom.children(node).filter(isRenderedNode).length > 0;
+	}
+
 	/**
 	 * Checks whether the given node is visually rendered according to HTML5
 	 * specification.
@@ -206,64 +241,7 @@ define([
 	 * @return {boolean}
 	 */
 	function isUnrendered(node) {
-		if (!Predicates.isVoidNode(node)
-				// Because empty list elements are rendered
-				&& !Predicates.isListItem(node)
-				&& 0 === Dom.nodeLength(node)) {
-			return true;
-		}
-
-		if (node.firstChild && !Dom.nextWhile(node.firstChild, isUnrendered)) {
-			return true;
-		}
-
-		// Because isUnrenderedWhiteSpaceNoBlockCheck() will give us false
-		// positives but never false negatives, the algorithm that will follow
-		// will make certain, and will also consider unrendered <br>s.
-		var maybeUnrenderedNode = isUnrenderedWhitespaceNoBlockCheck(node);
-
-		// Because a <br> element that is a child node adjacent to its parent's
-		// end tag (terminal sibling) must not be rendered.
-		if (!maybeUnrenderedNode
-				&& 'BR' === node.nodeName
-				&& isTerminalNode(node)
-				&& Styles.hasLinebreakingStyle(node.parentNode)) {
-			if (node.nextSibling && 'BR' === node.nextSibling.nodeName) {
-				return true;
-			}
-			if (node.previousSibling && 'BR' === node.previousSibling.nodeName) {
-				return true;
-			}
-			if (node.nextSibling && Dom.nextWhile(node.nextSibling, isUnrendered)) {
-				return true;
-			}
-			if (node.previousSibling && Dom.prevWhile(node.previousSibling, isUnrendered)) {
-				return true;
-			}
-			return false;
-		}
-
-		if (!maybeUnrenderedNode) {
-			return false;
-		}
-
-		if (isTerminalNode(node)) {
-			if (!Dom.isTextNode(node)) {
-				return false;
-			}
-
-			var inlineNode = Dom.nextNonAncestor(node, false, function (node) {
-				return Predicates.isInlineNode(node) && !isUnrendered(node);
-			}, function (node) {
-				return Styles.hasLinebreakingStyle(node) || Dom.isEditingHost(node);
-			});
-
-			return !inlineNode;
-		}
-
-		return isAdjacentToBlock(node)
-		    || skipUnrenderedToEndOfLine(Cursors.create(node, false))
-		    || skipUnrenderedToStartOfLine(Cursors.create(node, false));
+		return !isRenderedNode(node);
 	}
 
 	/**
@@ -273,7 +251,167 @@ define([
 	 * @return {boolean}
 	 */
 	function isRendered(node) {
-		return !isUnrendered(node);
+		return isRenderedNode(node);
+	}
+
+	/**
+	 * Checks whether or not the given node is a significant BR element.
+	 *
+	 * @param  {Node} node
+	 * @return {boolean}
+	 */
+	function isRenderedBr(node) {
+		if ('BR' !== node.nodeName) {
+			return false;
+		}
+
+		var ignorable = function (node) {
+			if ('BR' === node.nodeName) {
+				return false;
+			}
+			if (!Dom.isTextNode(node)) {
+				return Dom.children(node).length > 0;
+			}
+			if (!isUnrenderedWhitespaceNoBlockCheck(node)) {
+				return false;
+			}
+			return isTerminalNode(node);
+		};
+
+		var prev = node.previousSibling
+		        && Dom.prevWhile(node.previousSibling, ignorable);
+
+		var next = node.nextSibling
+		        && Dom.nextWhile(node.nextSibling, ignorable);
+
+		// Because a br between two visible siblings in an inline node is
+		// rendered
+		if (prev && next && Predicates.isInlineNode(node.parentNode)) {
+			return true;
+		}
+
+		// Because a br between two br or inline nodes is rendered
+		if ((prev && ('BR' === prev.nodeName || !Styles.hasLinebreakingStyle(prev)))
+				&&
+				(next && ('BR' === next.nodeName || !Styles.hasLinebreakingStyle(next)))) {
+			return true;
+		}
+
+		// Because a br next to another br will mean that both are rendered
+		if ((prev && ('BR' === prev.nodeName))
+				||
+				(next && ('BR' === next.nodeName))) {
+			return true;
+		}
+
+		// Because a br is the first space-consuming *tag* inside of a
+		// line-breaking element is rendered
+		var boundary = Boundaries.fromNode(node);
+		while (isAtStart(boundary)) {
+			if (Styles.hasLinebreakingStyle(Boundaries.container(boundary))) {
+				return true;
+			}
+			boundary = Boundaries.prev(boundary);
+		}
+
+		boundary = Boundaries.jumpOver(Boundaries.fromNode(node));
+		while (isAtEnd(boundary)) {
+			if (Styles.hasLinebreakingStyle(Boundaries.container(boundary))) {
+				return false;
+			}
+			boundary = Boundaries.next(boundary);
+		}
+
+		return !Styles.hasLinebreakingStyle(nextNode(boundary));
+	}
+
+	var zwChars = Strings.ZERO_WIDTH_CHARACTERS.join('');
+	var breakingWhiteSpaces = Arrays.difference(
+		Strings.WHITE_SPACE_CHARACTERS,
+		Strings.NON_BREAKING_SPACE_CHARACTERS
+	).join('');
+	var NOT_WSP = new RegExp('[^' + breakingWhiteSpaces + zwChars + ']');
+
+	/**
+	 * Checks whether a boundary represents a position that at the apparent end
+	 * of its container's content.
+	 *
+	 * Unlike Boundaries.isAtEnd(), it considers the boundary position with
+	 * respect to how it is visually represented, rather than simply where it
+	 * is in the DOM tree.
+	 *
+	 * @private
+	 * @param  {Boundary} boundary
+	 * @return {boolean}
+	 */
+	function isAtEnd(boundary) {
+		if (Boundaries.isAtEnd(boundary)) {
+			// |</p>
+			return true;
+		}
+		if (Boundaries.isTextBoundary(boundary)) {
+			// "fo|o" or "foo| "
+			return !NOT_WSP.test(Boundaries.container(boundary).data.substr(
+				Boundaries.offset(boundary)
+			));
+		}
+		var node = Boundaries.nodeAfter(boundary);
+		// foo|<br></p> or foo|<i>bar</i>
+		return !Dom.nextWhile(node, isUnrendered);
+	}
+
+	/**
+	 * Checks whether a boundary represents a position that at the apparent
+	 * start of its container's content.
+	 *
+	 * Unlike Boundaries.isAtStart(), it considers the boundary position with
+	 * respect to how it is visually represented, rather than simply where it
+	 * is in the DOM tree.
+	 *
+	 * @private
+	 * @param  {Boundary} boundary
+	 * @return {boolean}
+	 */
+	function isAtStart(boundary) {
+		if (Boundaries.isAtStart(boundary)) {
+			return true;
+		}
+		if (Boundaries.isTextBoundary(boundary)) {
+			return !NOT_WSP.test(Boundaries.container(boundary).data.substr(
+				0,
+				Boundaries.offset(boundary)
+			));
+		}
+		var node = Boundaries.nodeBefore(boundary);
+		return !Dom.prevWhile(node, isUnrendered);
+	}
+
+	/**
+	 * Like Boundaries.nextNode(), except that it considers whether a boundary
+	 * is at the end position with respect to how the boundary is visual
+	 * represented, rather than simply where it is in the DOM structure.
+	 *
+	 * @param  {Boundary} boundary
+	 * @return {Node}
+	 */
+	function nextNode(boundary) {
+		return isAtEnd(boundary)
+		     ? Boundaries.container(boundary)
+		     : Boundaries.nodeAfter(boundary);
+	}
+
+	/**
+	 * Like Boundaries.prevNode(), except that it considers whether a boundary
+	 * is at the start position with respect to how the boundary is visual
+	 * represented, rather than simply where it is in the DOM structure.
+	 *
+	 * @param  {Boundary} boundary
+	 * @return {Node}
+	 */
+	function prevNode(boundary) {
+		return isAtEnd(boundary)
+		     ? Boundaries.container(boundary)
+		     : Boundaries.nodeBefore(boundary);
 	}
 
 	/**

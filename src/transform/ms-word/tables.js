@@ -13,7 +13,7 @@ define(['dom'], function (Dom) {
 	 *
 	 * @private
 	 * @param  {Array.<Node>} nodes
-	 * @pram   {Document}     doc
+	 * @param  {Document}     doc
 	 * @return {Array.<Node>}
 	 */
 	function createTableHeadings(nodes, doc) {
@@ -47,7 +47,7 @@ define(['dom'], function (Dom) {
 	 *
 	 * @param  {node}     element
 	 * @param  {Document} doc
-	 * @return {Element} A normalized copy of `element`
+	 * @return {Element}  A normalized copy of `element`
 	 */
 	function transform(element, doc) {
 		var children = Dom.children(element);
