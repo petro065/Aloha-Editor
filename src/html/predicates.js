@@ -9,7 +9,8 @@ define([], function Predicates() {
 	'use strict';
 
 	/**
-	 * Void elements are elements which are not permitted to contain content.
+	 * Void elements. These are elements which do not contain any content
+	 * nested in them.
 	 * https://developer.mozilla.org/en-US/docs/Web/HTML/Element
 	 *
 	 * @private
@@ -35,10 +36,10 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * A map of node tag names which are classified as block-level element.
+	 * Elements which are classified as "block-level".
 	 *
-	 * NB: "block-level" is not technically defined for elements that are new in
-	 * HTML5.
+	 * NB: "block-level" is not technically defined for elements that are new
+	 * in HTML5.
 	 *
 	 * @private
 	 * @type {Object.<string, boolean>}
@@ -80,7 +81,7 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * Elements which don't constitue a word boundaries limit.
+	 * Elements which don't constitue a word boundary limit.
 	 *
 	 * @private
 	 * @type {object.<string, true>}
@@ -118,7 +119,7 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * Tags representing list container elements.
+	 * List container elements.
 	 *
 	 * @private
 	 * @type {Object.<string, boolean>}
@@ -131,7 +132,7 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * Tags representing list item elements.
+	 * List item elements.
 	 *
 	 * @private
 	 * @type {Object.<string, boolean>}
@@ -143,12 +144,12 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * These element's cannot be simply unwrapped because they have dependent
+	 * Elements that cannot be simply unwrapped because they have dependent
 	 * children.
 	 *
 	 * @private
 	 * @see   GROUPED_CONTAINERS
-	 * @param {<string, boolean>}
+	 * @param {Object.<string, boolean>}
 	 */
 	var GROUP_CONTAINERS = {
 		'FIELDSET' : true,
@@ -168,12 +169,12 @@ define([], function Predicates() {
 	};
 
 	/**
-	 * These element's cannot be simply unwrapped because they parents only
-	 * allows these as their immediate child nodes.
+	 * Elements that cannot be simply unwrapped because they parents only
+	 * allows them as their immediate child nodes.
 	 *
 	 * @private
 	 * @see   GROUP_CONTAINERS
-	 * @param {<string, Array.<string>}
+	 * @param {Object.<string, Array.<string>}
 	 */
 	var GROUPED_ELEMENTS = {
 		'LI'    : ['OL', 'UL', 'DL'],
@@ -187,8 +188,7 @@ define([], function Predicates() {
 
 	/**
 	 * Checks if the given node is grouping container.
-	 *
-	 * Grouping containers include TABLE, FIELDSET, SELECT.  
+	 * Grouping containers include TABLE, FIELDSET, SELECT.
 	 *
 	 * @see    GROUP_CONTAINERS
 	 * @param  {Node} node
@@ -199,10 +199,10 @@ define([], function Predicates() {
 	}
 
 	/**
-	 * Checks if the given node an element that can only be a child of a group
-	 * container.
+	 * Checks if the given node is an element that can only be a child of a
+	 * group container.
 	 *
-	 * LI, TD are the classic cases.
+	 * LI, TD are the usual cases.
 	 *
 	 * @see    GROUPED_CONTAINER
 	 * @param  {Node} node
@@ -243,7 +243,7 @@ define([], function Predicates() {
 	}
 
 	/**
-	 * Check whether the given node is a void element type.
+	 * Check whether the given node is a void element.
 	 *
 	 * @param  {Node} node
 	 * @return {boolean}
@@ -253,8 +253,8 @@ define([], function Predicates() {
 	}
 
 	/**
-	 * Similar to hasBlockStyle() except relies on the nodeName of the given
-	 * node which works for attached as well as and detached nodes.
+	 * Similar to hasBlockStyle() except that it relies on the nodeName of the
+	 * given node which works for attached as well as and detached nodes.
 	 *
 	 * Will return true if the given node is a block node type--regardless of
 	 * how it is rendered.
@@ -281,7 +281,7 @@ define([], function Predicates() {
 	}
 
 	/**
-	 * Check whether the given node is a text-level semantic element type.
+	 * Checks whether the given node is a text-level semantic element.
 	 *
 	 * @param  {Node} node
 	 * @return {boolean}
