@@ -151,8 +151,8 @@ define([
 
 	/**
 	 * Runs the appropriate cleaning processes on the given node based on its
-	 * type.  The returned node will not necessarily be of the same type as
-	 * that of the given (eg: <font> => <span>).
+	 * type. The returned node will not necessarily be of the same type as that
+	 * of the given (eg: <font> => <span>).
 	 *
 	 * @param  {Node}     node
 	 * @param  {Document} doc

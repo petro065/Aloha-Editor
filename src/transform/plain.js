@@ -9,7 +9,7 @@ define([], function() {
 	'use strict';
 
 	/**
-	 * Transforms plain text into visually comparable HTML.
+	 * Transforms plain text into visually equivalent HTML.
 	 *
 	 * @param  {string}   text
 	 * @param  {Document} doc

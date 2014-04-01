@@ -1,5 +1,5 @@
 /**
- * transform/ms-word-transform-list.js is part of Aloha Editor project http://aloha-editor.org
+ * transform/ms-word/list.js is part of Aloha Editor project http://aloha-editor.org
  *
  * Aloha Editor is a WYSIWYG HTML5 inline editing library and editor.
  * Copyright (c) 2010-2014 Gentics Software GmbH, Vienna, Austria.
@@ -49,7 +49,7 @@ define([
 	 * Extracts the number from an ordered list item.
 	 *
 	 * @param  {Element} element
-	 * @return {?String}
+	 * @return {?string}
 	 */
 	function extractNumber(element) {
 		if (!element.firstChild) {
@@ -113,8 +113,8 @@ define([
 	}
 
 	/**
-	 * Checks whether the given node is a leading span that msword uses to as a
-	 * list bullet point or list number.
+	 * Checks whether the given node is a leading span that msword uses to
+	 * denote a list bullet point or list number.
 	 *
 	 * <p class="MsoListParagraphCxSp...">
 	 *
@@ -166,7 +166,7 @@ define([
 	 */
 	function isFirstListParagraph(node) {
 		return ('P' === node.nodeName)
-			&& Dom.hasClass(node, 'MsoListParagraphCxSpFirst');
+		    && Dom.hasClass(node, 'MsoListParagraphCxSpFirst');
 	}
 
 	/**
@@ -201,14 +201,11 @@ define([
 	 * @return {boolean}
 	 */
 	function isStartOfListItem(node) {
-		if (!node.firstChild) {
-			return false;
-		}
-		return isIgnorableSpan(node.firstChild);
+		return node.firstChild ? isIgnorableSpan(node.firstChild) : false;
 	}
 
 	/**
-	 * Creates an LI from the given list-paragraph.
+	 * Creates an LI element from the given list-paragraph.
 	 *
 	 * @param  {Element}  p
 	 * @param  {Document} doc
@@ -255,12 +252,12 @@ define([
 	}
 
 	/**
-	 * Creates a list DOM structure based on the given `list` data structure
-	 * (created from createList()).
+	 * Generates a list DOM structure from the given structure (created from
+	 * createList()).
 	 *
 	 * @param  {Object}   list
 	 * @param  {Document} doc
-	 * @param  {String}   marker
+	 * @param  {string}   marker
 	 * @return {Element}
 	 */
 	function constructList(list, doc, marker) {
@@ -358,15 +355,15 @@ define([
 	 * Transforms list-paragraphs in the given DOM structure to normalized HTML
 	 * lists.
 	 *
-	 * Note that decimal-pointer counters are a styling issue and not a
-	 * structural issue  This mean that the list numbering may look different,
-	 * even when the normalized structure matches MS-Word's, until you apply
-	 * the correct css styling.
-	 * (see: https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Counters). 
+	 * Note that decimal-pointer counters are a styling feature and not a
+	 * structural. This means that the list numbering may look different, even
+	 * when the normalized structure matches MS-Word's, until correct css is
+	 * applied.
+	 * (see: https://developer.mozilla.org/en-US/docs/Web/Guide/CSS/Counters).
 	 *
 	 * @param  {Element}  element
 	 * @param  {Document} doc
-	 * @return {Element} A normalized copy of `element`
+	 * @return {Element}  A normalized copy of `element`
 	 */
 	function transform(element, doc) {
 		var children = Dom.children(element);

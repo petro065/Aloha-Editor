@@ -159,8 +159,8 @@ define([
 	}
 
 	/**
-	 * Extracts body content if the content is an HTML page. Otherwise it
-	 * returns the content itself.
+	 * Extracts body content if the content is an HTML page. Returns the
+	 * content itself otherwise.
 	 *
 	 * @fixme
 	 * What if `content` contains a comment like this:
