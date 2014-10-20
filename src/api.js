@@ -45,7 +45,8 @@ define([
 	'traversing',
 	'typing',
 	'undo',
-	'zippers'
+	'zippers',
+	'verticals'
 ], function (
 	Arrays,
 	Blocks,
@@ -82,7 +83,8 @@ define([
 	Traversing,
 	Typing,
 	Undo,
-	Zippers
+	Zippers,
+	Verticals
 ) {
 	'use strict';
 
