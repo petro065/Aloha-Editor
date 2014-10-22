@@ -28,31 +28,47 @@ define([
 		return Dom.upWhile(node, Fn.complement(match));
 	}
 
-	var voidMarker = '♞';
+	var VOID_MARKER = '♞';
+	var LEAF = 1 << 0;
+	var TEXT = 1 << 1;
+	var VOID = 1 << 2;
+	var META = 1 << 3;
 
-	function harvest(element, offset, content, ranges) {
-		var cumulative = offset;
-		// Horizantal offsets into the content
+	function getBit(node) {
+		if (Dom.isTextNode(node)) {
+			return TEXT | LEAF;
+		}
+		if (Html.isVoidNode(node)) {
+			return VOID | LEAF;
+		}
+		return META;
+	}
+
+	function collectFormatting(element, offset) {
+		offset = offset || 0;
+		var ranges = [];
+		var snippets = [];
 		Dom.children(element).forEach(function (node) {
-			var end;
-			if (Dom.isTextNode(node)) {
-				content.push(node.data);
-				end = cumulative + node.data.length;
-			} else if (Html.isVoidNode(node)) {
-				content.push(voidMarker);
-				end = cumulative + 1;
+			var bit = getBit(node);
+			var length;
+			if (bit & LEAF) {
+				var content = bit & TEXT ? node.data : VOID_MARKER;
+				length = content.length;
+				ranges.push([offset, length, node]);
+				snippets.push(content);
 			} else {
-				end = harvest(node, cumulative, content, ranges);
+				var more = collectFormatting(node, offset);
+				var range = Arrays.last(more.ranges);
+				length = range[0] + range[1] - offset;
+				ranges = ranges.concat([[offset, length, node]], more.ranges);
+				snippets.push(more.content);
 			}
-			var range = [cumulative, end, node];
-			if (ranges[cumulative]) {
-				ranges[cumulative].push(range);
-			} else {
-				ranges[cumulative] = [range];
-			}
-			cumulative = end;
+			offset += length;
 		});
-		return cumulative;
+		return {
+			content : snippets.join(''),
+			ranges  : ranges
+		};
 	}
 
 	var zwChars = Strings.ZERO_WIDTH_CHARACTERS.join('');
@@ -64,10 +80,9 @@ define([
 	var NOT_WSP_FROM_START = new RegExp('[^' + breakingWhiteSpaces + zwChars + ']');
 	var WSP_FROM_START = new RegExp('[' + breakingWhiteSpaces + ']');
 
-	function collectInsignificant(content) {
+	function collectWhitespaces(content, whitespaces, formatting) {
 		var snippet = content;
 		var contents = [];
-		var ranges = {};
 		var offset = 0;
 		var match;
 		while (snippet.length > 0) {
@@ -84,13 +99,13 @@ define([
 						contents.push(' ');
 						match--;
 					}
-					ranges[offset] = [offset, offset + match];
+					whitespaces[offset] = [offset, match];
 				}
 				offset++;
 			}
 			// Because `snippet` consists only of white spaces
 			if (-1 === match) {
-				ranges[offset] = [offset, offset + snippet.length];
+				whitespaces[offset] = [offset, snippet.length];
 				offset += snippet.length;
 				break;
 			}
@@ -104,25 +119,55 @@ define([
 			snippet = snippet.substring(match);
 			offset += match;
 		}
-		var count = 0;
-		var string = contents.join('');
-		Maps.forEach(ranges, function (obj, index) {
-			var offset = parseInt(index, 10) + count;
-			string = string.substring(0, offset) + '^' + string.substring(offset);
-			count++;
-		});
-		console.warn(string);
+		return contents.join('');
 	}
 
 	function handle(boundaries) {
-		var ranges = {};
-		var contents = [];
 		var block = closest(
 			Boundaries.container(boundaries[0]),
 			Html.hasLinebreakingStyle
 		);
-		harvest(block, 0, contents, ranges);
-		collectInsignificant(contents.join(''), ranges);
+		Dom.remove(block.querySelector('br'));
+		console.log(block.innerHTML.replace(/\s/g, '·'));
+
+		var yarn = collectFormatting(block);
+
+		console.log(yarn.content);
+
+		var str = [];
+		Maps.forEach(yarn.ranges, function (range) {
+			str.push('{' + range[2].nodeName + ' "' + yarn.content.substring(range[0], range[0] + range[1]) + '"}');
+		});
+
+		console.dir(str);
+
+
+		string = collectWhitespaces(string, whitespaces, formatting);
+		output = string;
+		count = 0;
+		Maps.forEach(whitespaces, function (range, index) {
+			var marker = '^';
+			var offset = range[0] + count;
+			output = output.substring(0, offset) + marker + output.substring(offset);
+			count += marker.length;
+		});
+		console.warn(output.replace(/\s/g, '·'));
+
+		Maps.forEach(whitespaces, function (range, index) {
+			console.error(range);
+		});
+
+		/*
+		output = string;
+		count = 0;
+		Maps.forEach(formatting, function (obj, index) {
+			var marker = '^';
+			var offset = parseInt(index, 10) + count;
+			output = output.substring(0, offset) + marker + output.substring(offset);
+			count += marker.length;
+		});
+		console.warn(output.replace(/\s/g, '·'));
+		*/
 	}
 
 	window.verticals = handle;
