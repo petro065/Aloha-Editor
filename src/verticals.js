@@ -104,12 +104,79 @@ define([
 	var NOT_WSP_FROM_START = new RegExp('[^' + breakingWhiteSpaces + zwChars + ']');
 	var WSP_FROM_START = new RegExp('[' + breakingWhiteSpaces + ']');
 
-	function splice(yarn, start, count, insert) {
-		var original = yarn.content;
-		var edited = original.substring(0, start)
-		           + (insert || '')
-		           + original.substring(start + count);
-		return Maps.merge(yarn, {content: edited});
+	function splice(yarn, start, count, text) {
+		var end = start + count;
+		var insert = text || '';
+		var content = yarn.content.substring(0, start)
+		            + insert
+		            + yarn.content.substring(end);
+
+		// start < a && end < b
+		//   [ ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start < a && end > start && end < b
+		//   [        ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start < a && end == b
+		//   [           ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start < a && end > b
+		//   [             ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start == a && end < b
+		//         [   ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start == a && end == b
+		//         [     ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start == a && end > b
+		//         [       ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start > a && end < b
+		//           [ ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start > a && end == b
+		//           [   ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start > a && end > b
+		//           [     ]
+		//         [     ]
+		// a b c d e f g h i j
+
+		// start > a && end > b
+		//           [   ]
+		//   [     ]
+		// a b c d e f g h i j
+
+		var adjusted = yarn.ranges.reduce(function (ranges, range) {
+			var a = range[0];
+			var b = range[1];
+			return ranges.concat(range);
+		}, []);
+
+		return {
+			content   : content,
+			ranges    : adjusted.concat(),
+			collapsed : yarn.collapsed.concat()
+		};
 	}
 
 	function extractCollapsed(yarn) {
@@ -167,9 +234,11 @@ define([
 
 		console.log(result.content);
 
-		var str = yarn.content;
+		yarn = result;
 		var offset = 0;
-		Maps.forEach(yarn.ranges, function (range) {
+		var str = yarn.content;
+		var ranges = yarn.ranges;
+		Maps.forEach(ranges, function (range) {
 			var start = range[0] + offset;
 			var end = range[1] + offset;
 			if ('split' === range[2]) {
