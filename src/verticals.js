@@ -37,6 +37,8 @@ define([
 ) {
 	'use strict';
 
+	var TESTS = true;
+
 	function closest(node, match) {
 		return Dom.upWhile(node, Fn.complement(match));
 	}
@@ -111,61 +113,6 @@ define([
 		            + insert
 		            + yarn.content.substring(end);
 
-		// start < a && end < b
-		//   [ ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start < a && end > start && end < b
-		//   [        ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start < a && end == b
-		//   [           ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start < a && end > b
-		//   [             ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start == a && end < b
-		//         [   ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start == a && end == b
-		//         [     ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start == a && end > b
-		//         [       ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start > a && end < b
-		//           [ ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start > a && end == b
-		//           [   ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start > a && end > b
-		//           [     ]
-		//         [     ]
-		// a b c d e f g h i j
-
-		// start > a && end > b
-		//           [   ]
-		//   [     ]
-		// a b c d e f g h i j
-
 		var adjusted = yarn.ranges.reduce(function (ranges, range) {
 			var a = range[0];
 			var b = range[1];
@@ -178,6 +125,237 @@ define([
 			collapsed : yarn.collapsed.concat()
 		};
 	}
+
+	var BRACKETS = ['[', ']'];
+	var BRACES   = ['{', '}'];
+	function mark(text, start, end, markers) {
+		return text.substring(0, start)
+		     + markers[0]
+		     + text.substring(start, end)
+		     + markers[1]
+		     + text.substring(end);
+	}
+
+	var tests = [
+		//       [     ]
+		//   |
+		//   { }
+		//   {   }
+		//   {       }
+		//   {             }
+		// 0 1 2 3 4 5 6 7 8 9
+		//       |
+		//       {   }
+		//       {     }
+		//       {         }
+		// 0 1 2 3 4 5 6 7 8 9
+		//         |
+		//         { }
+		//         {   }
+		//         {       }
+		// 0 1 2 3 4 5 6 7 8 9
+		//             |
+		//             {   }
+		// 0 1 2 3 4 5 6 7 8 9
+		//               |
+		//               { }
+		// 0 1 2 3 4 5 6 7 8 9
+		//
+		// 0123456789 => 0126789
+		['012[345]6789', '0126789'],
+		['0|12[345]6789', '0|126789'],
+		['0{1}2[345]6789', '0{1}26789']
+	];
+
+	function readMarkers(content) {
+		var onlyBrackets = content.replace(/[\{\}\|]/g, '');
+		var bracketsStart = onlyBrackets.search(/\[/);
+		var bracketsEnd = onlyBrackets.search(/\]/) - 1;
+		var brackets = bracketsStart > -1 && bracketsEnd > -1
+		             ? [bracketsStart, bracketsEnd]
+		             : [];
+		var onlyBraces = content.replace(/[\[\]\|]/g, '');
+		var bracesStart = onlyBraces.search(/\{/);
+		var bracesEnd = onlyBraces.search(/\}/) - 1;
+		var braces = bracesStart > -1 && bracesEnd > -1
+		           ? [bracesStart, bracesEnd]
+		           : [];
+		var single = content.replace(/[\{\}\[\]]/g, '').search(/\|/);
+		return {
+			brackets : brackets,
+			braces   : braces,
+			single   : single
+		};
+	}
+
+	if (TESTS) {
+		[{
+			content  : '012[345]6789',
+			braces   : [2],
+			brackets : [3, 6],
+			single   : -1
+		}, {
+			content  : '0|12[345]6789',
+			braces   : [],
+			brackets : [3, 6],
+			single   : 1
+		}, {
+			content  : '0{1}2[345]6789',
+			braces   : [1, 2],
+			brackets : [3, 6],
+			single   : -1
+		}].forEach(function (test) {
+			var markers = readMarkers(test.content);
+			Maps.forEach(markers, function (value, key) {
+				if (test[key].toString() !== value.toString()) {
+					console.error(
+						'readMarkers() test:',
+						'Expected ' + key + ' to be "' + value + '", but got "' + test[key] + '"'
+					);
+				}
+			});
+		});
+	}
+
+	/*
+	tests.forEach(function (test) {
+		var original = test[0];
+		var expected = test[1];
+		var markers = readMarkers(original);
+
+		console.warn(markers);
+
+		//var actual = original.substr(0, start) + original.substr(end + 1);
+		//console.log(expected === actual);
+	});
+	*/
+
+
+			/*
+
+			// start < a && end < b
+			//   [ ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//       {     }
+			// 0 2 3 4 5 6 7 8 9   mutated
+			//
+			// 1                   removed
+			[1, 2, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start < a && end > start && end < b
+			//   [       ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//   {   }
+			// 0 5 6 7 8 9         mutated
+			//       { }
+			// 1 2 3 4             removed
+			[1, 5, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start < a && end == b
+			//   [           ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//
+			// 0 7 8 9             mutated
+			//       {     }
+			// 1 2 3 4 5 6         removed
+			[1, 7, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start < a && end > b
+			//   [             ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//
+			// 0 8 9               mutated
+			//       {     }
+			// 1 2 3 4 5 6 7       removed
+			[1, 9, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start == a && end < b
+			//         [   ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//         { }
+			// 0 1 2 3 6 7 8 9     mutated
+			// {   }
+			// 4 5                 removed
+			[4, 6, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start == a && end == b
+			//         [     ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//
+			// 0 1 2 3 7 8 9       mutated
+			// {     }
+			// 4 5 6               removed
+			[4, 7, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start == a && end > b
+			//         [       ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//
+			// 0 1 2 3 8 9         mutated
+			// {     }
+			// 4 5 6 7 8           removed
+			[4, 8, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start > a && end < b
+			//           [ ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//         {   }
+			// 0 1 2 3 4 6 7 8 9   mutated
+			// {   }
+			// 5 6                 removed
+			[5, 6, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start > a && end == b
+			//           [   ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//
+			// 0 1 2 3 4 7 8 9     mutated
+			//
+			// 5 6                 removed
+			[5, 7, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start > a && end > b
+			//           [     ]
+			//         {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//         { }
+			// 0 1 2 3 4 8 9       mutated
+			// {     }
+			// 4 5 6 7             removed
+			[5, 8, {start:true}],
+			[4, 7, {end  :true}],
+
+			// start > a && end > b
+			//           [   ]
+			//   {     }
+			// 0 1 2 3 4 5 6 7 8 9 content
+			//   {     }
+			// 0 1 2 3 4 7 8 9     mutated
+			//
+			// 5 6                 removed
+			[5, 7, {start:true}],
+			[1, 4, {end  :true}]
+
+			*/
+
 
 	function extractCollapsed(yarn) {
 		var collapsed = [];
