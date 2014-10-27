@@ -46,7 +46,7 @@ define([
 	'typing',
 	'undo',
 	'zippers',
-	'verticals'
+	'deranged'
 ], function (
 	Arrays,
 	Blocks,
@@ -84,7 +84,7 @@ define([
 	Typing,
 	Undo,
 	Zippers,
-	Verticals
+	Deranged
 ) {
 	'use strict';
 
