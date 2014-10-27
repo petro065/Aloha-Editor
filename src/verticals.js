@@ -126,86 +126,54 @@ define([
 		};
 	}
 
-	var BRACKETS = ['[', ']'];
-	var BRACES   = ['{', '}'];
-	function mark(text, start, end, markers) {
-		return text.substring(0, start)
-		     + markers[0]
-		     + text.substring(start, end)
-		     + markers[1]
-		     + text.substring(end);
-	}
-
-	var tests = [
-		//       [     ]
-		//   |
-		//   { }
-		//   {   }
-		//   {       }
-		//   {             }
-		// 0 1 2 3 4 5 6 7 8 9
-		//       |
-		//       {   }
-		//       {     }
-		//       {         }
-		// 0 1 2 3 4 5 6 7 8 9
-		//         |
-		//         { }
-		//         {   }
-		//         {       }
-		// 0 1 2 3 4 5 6 7 8 9
-		//             |
-		//             {   }
-		// 0 1 2 3 4 5 6 7 8 9
-		//               |
-		//               { }
-		// 0 1 2 3 4 5 6 7 8 9
-		//
-		// 0123456789 => 0126789
-		['012[345]6789', '0126789'],
-		['0|12[345]6789', '0|126789'],
-		['0{1}2[345]6789', '0{1}26789']
-	];
-
-	function readMarkers(content) {
-		var onlyBrackets = content.replace(/[\{\}\|]/g, '');
+	function readMarkers(marked) {
+		var onlyBrackets = marked.replace(/[\{\}\|]/g, '');
 		var bracketsStart = onlyBrackets.search(/\[/);
 		var bracketsEnd = onlyBrackets.search(/\]/) - 1;
 		var brackets = bracketsStart > -1 && bracketsEnd > -1
 		             ? [bracketsStart, bracketsEnd]
 		             : [];
-		var onlyBraces = content.replace(/[\[\]\|]/g, '');
+		var onlyBraces = marked.replace(/[\[\]\|]/g, '');
 		var bracesStart = onlyBraces.search(/\{/);
 		var bracesEnd = onlyBraces.search(/\}/) - 1;
 		var braces = bracesStart > -1 && bracesEnd > -1
 		           ? [bracesStart, bracesEnd]
 		           : [];
-		var single = content.replace(/[\{\}\[\]]/g, '').search(/\|/);
 		return {
 			brackets : brackets,
 			braces   : braces,
-			single   : single
+			single   : marked.replace(/[\{\}\[\]]/g, '').search(/\|/),
+			content  : marked.replace(/[\{\}\[\]\|]/g, '')
 		};
 	}
 
 	if (TESTS) {
 		[{
-			content  : '012[345]6789',
-			braces   : [2],
+			test     : '012[345]6789',
+			content  : '0123456789',
+			braces   : [],
 			brackets : [3, 6],
 			single   : -1
 		}, {
-			content  : '0|12[345]6789',
+			test     : '0|12[345]6789',
+			content  : '0123456789',
 			braces   : [],
 			brackets : [3, 6],
 			single   : 1
 		}, {
-			content  : '0{1}2[345]6789',
+			test     : '0{1}2[345]6789',
+			content  : '0123456789',
 			braces   : [1, 2],
 			brackets : [3, 6],
 			single   : -1
+		}, {
+			test     : '0{12[3}45]6789',
+			content  : '0123456789',
+			braces   : [1, 4],
+			brackets : [3, 6],
+			single   : -1
 		}].forEach(function (test) {
-			var markers = readMarkers(test.content);
+			var markers = readMarkers(test.test);
 			Maps.forEach(markers, function (value, key) {
 				if (test[key].toString() !== value.toString()) {
 					console.error(
@@ -217,18 +185,99 @@ define([
 		});
 	}
 
-	/*
-	tests.forEach(function (test) {
-		var original = test[0];
-		var expected = test[1];
-		var markers = readMarkers(original);
+	function remove(content, start, end, preserve) {
+		var mutated = content.substr(0, start) + content.substr(end);
+		var a = preserve[0];
+		var b = preserve[1];
+		if (!a || !b || (a >= start && b <= end)) {
+			return {
+				content   : mutated,
+				preserved : []
+			};
+		}
+		if (start < a) {
+			a = a - (Math.min(a, end) - start);
+		}
+		if (start < b) {
+			b = b - (Math.min(b, end) - start);
+		}
+		return {
+			content   : mutated,
+			preserved : [a, b]
+		};
+	}
 
-		console.warn(markers);
+	if (TESTS) {
+		[
 
-		//var actual = original.substr(0, start) + original.substr(end + 1);
-		//console.log(expected === actual);
-	});
-	*/
+			// 0 1 2 3 4 5 6 7 8 9
+			['012[345]6789',   '0126789'  ],
+
+			//   |
+			// 0 1 2 3 4 5 6 7 8 9
+			['0|12[345]6789',  '0|126789' ],
+
+			//   { }
+			//   {   }
+			//   {       }
+			//   {             }
+			//       [     ]
+			// 0 1 2 3 4 5 6 7 8 9
+			['0{1}2[345]6789', '0{1}26789'],
+			['0{12}[345]6789', '0{12}6789'],
+			['0{12[34}5]6789', '0{12}6789'],
+			['0{12[345]67}89', '0{1267}89'],
+
+			//       |
+			//       {   }
+			//       {     }
+			//       {         }
+			//       [     ]
+			// 0 1 2 3 4 5 6 7 8 9
+			['012{[34}5]6789', '0126789'],
+			['012{[345}]6789', '0126789'],
+			['012[{345]67}89', '012{67}89'],
+
+			//         |
+			//         { }
+			//         {   }
+			//         {       }
+			//       [     ]
+			// 0 1 2 3 4 5 6 7 8 9
+			['012[3{4}5]6789', '0126789'],
+			['012[3{45}]6789', '0126789'],
+			['012[3{45]67}89', '012{67}89'],
+
+			//             |
+			//             {   }
+			//       [     ]
+			// 0 1 2 3 4 5 6 7 8 9
+			['012[345{]67}89', '012{67}89'],
+
+			//               |
+			//               { }
+			//       [     ]
+			// 0 1 2 3 4 5 6 7 8 9
+			['012[345]6{7}89', '0126{7}89']
+
+		].forEach(function (test) {
+			var original = readMarkers(test[0]);
+			var expected = readMarkers(test[1]);
+			var result = remove(
+				original.content,
+				original.brackets[0],
+				original.brackets[1],
+				original.braces
+			);
+			if (result.preserved.toString() !== expected.braces.toString()) {
+				console.error(
+					'remove() test:',
+					'Expected "' + expected.braces.toString()
+						+ '", but got "' + result.preserved.toString() + '"'
+				);
+			}
+		});
+	}
 
 
 			/*
@@ -400,6 +449,7 @@ define([
 	}
 
 	function create(boundaries) {
+		return;
 		var block = closest(
 			Boundaries.container(boundaries[0]),
 			Html.hasLinebreakingStyle
