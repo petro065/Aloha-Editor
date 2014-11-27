@@ -328,6 +328,8 @@
 		onSelectionChange
 	));
 
+	Editor.stack.unshift(handleUi);
+
 	aloha.ui = {
 		on               : on,
 		hook             : hook,
@@ -337,7 +339,5 @@
 		removeFormatting : removeFormatting,
 		shortcuts        : []
 	};
-
-	aloha.editor.stack.unshift(handleUi);
 
 }(window.aloha));

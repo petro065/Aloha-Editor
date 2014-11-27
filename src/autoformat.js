@@ -72,26 +72,32 @@ define([
 	}
 
 	var triggers = {
-		'```' : code,
+		'```'  : code,
 
-		'(:'  : Fn.partial(ascii, '☺'),
-		':)'  : Fn.partial(ascii, '☺'),
+		'(:'   : Fn.partial(ascii, '☺'),
+		':)'   : Fn.partial(ascii, '☺'),
 
-		':('  : Fn.partial(ascii, '☹'),
-		'):'  : Fn.partial(ascii, '☹'),
+		'(-:'  : Fn.partial(ascii, '☺'),
+		':-)'  : Fn.partial(ascii, '☺'),
 
-		'<3'  : Fn.partial(ascii, '♥'),
+		':('   : Fn.partial(ascii, '☹'),
+		'):'   : Fn.partial(ascii, '☹'),
 
-		'--'  : Fn.partial(ascii, '—'),
+		':-('  : Fn.partial(ascii, '☹'),
+		')-:'  : Fn.partial(ascii, '☹'),
 
-		'-->' : Fn.partial(ascii, '→'),
-		'<--' : Fn.partial(ascii, '←'),
+		'<3'   : Fn.partial(ascii, '♥'),
 
-		'==>' : Fn.partial(ascii, '⇒'),
-		'<==' : Fn.partial(ascii, '⇐'),
+		'--'   : Fn.partial(ascii, '—'),
 
-		'|>'  : Fn.partial(ascii, '►'),
-		'<|'  : Fn.partial(ascii, '◄')
+		'-->'  : Fn.partial(ascii, '→'),
+		'<--'  : Fn.partial(ascii, '←'),
+
+		'==>'  : Fn.partial(ascii, '⇒'),
+		'<=='  : Fn.partial(ascii, '⇐'),
+
+		'|>'   : Fn.partial(ascii, '►'),
+		'<|'   : Fn.partial(ascii, '◄')
 	};
 
 	/**

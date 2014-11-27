@@ -10,6 +10,7 @@ define([
 	'functions',
 	'dom',
 	'html',
+	'maps',
 	'arrays',
 	'assert',
 	'boromir',
@@ -22,6 +23,7 @@ define([
 	Fn,
 	Dom,
 	Html,
+	Maps,
 	Arrays,
 	Assert,
 	Boromir,
@@ -53,17 +55,22 @@ define([
 	 * This function is to be used in a reduce() call.
 	 *
 	 * @private
-	 * @param  {Array.<Element>} list collection of list items
-	 * @param  {Array.<Node>}    children
+	 * @param  {Array.<Element>}  list collection of list items
+	 * @param  {Array.<Node>}     children
 	 * @return {Array.<Element>}
 	 */
-	function reduceGroup(list, children) {
+	function reduceGroup(preserved, boundaries, list, children, index) {
 		list = list.concat();
 		var visible = children.filter(Html.isRendered);
 		if (visible.length > 0) {
-			var li = visible[0].ownerDocument.createElement('li');
-			Dom.move(visible, li);
+			var li = children[0].ownerDocument.createElement('li');
+			Dom.move(children, li);
 			list.push(li);
+			if (preserved[index]) {
+				preserved[index].forEach(function (offset, i) {
+					boundaries[i] = Boundaries.create(li, offset);
+				});
+			}
 		}
 		return list;
 	}
@@ -136,10 +143,20 @@ define([
 	 * @param  {Array.<Node>} siblings
 	 * @return {Object.<string, Array.<Node>>}
 	 */
-	function groupNodes(siblings) {
-		var groups = [];
-		var parents = [];
+	function groupNodes(siblings, boundaries) {
+		var containers = boundaries.map(Boundaries.container);
+		var offsets = boundaries.map(Boundaries.offset);
+		var preserve = function (node) {
+			return containers.reduce(function (preserved, container, index) {
+				return (container === node)
+				     ? preserved.concat(offsets[index])
+				     : preserved;
+			}, []);
+		};
 		var nodes = siblings.concat();
+		var preserved = {};
+		var parents = [];
+		var groups = [];
 		var collection;
 		var split;
 		var node;
@@ -151,9 +168,11 @@ define([
 			if (Html.hasLinebreakingStyle(node) && canUnwrap) {
 				collection = Dom.children(node);
 				parents.push(node);
+				preserved[groups.length] = preserve(node);
 			} else {
 				collection = [node];
 				parents.push(node.parentNode);
+				preserved[groups.length] = preserve(node);
 			}
 			split = Arrays.split(nodes, Html.hasLinebreakingStyle);
 			collection = collection.concat(split[0]);
@@ -163,8 +182,9 @@ define([
 			}
 		}
 		return {
-			groups  : groups,
-			parents : parents
+			preserved : preserved,
+			groups    : groups,
+			parents   : parents
 		};
 	}
 
@@ -172,12 +192,13 @@ define([
 	 * Builds a list of type `type` using the given list of nodes.
 	 *
 	 * @private
-	 * @param  {string}       type
-	 * @param  {Array.<Node>} nodes
+	 * @param  {string}           type
+	 * @param  {Array.<Node>}     nodes
+	 * @param  {Array.<Boundary>} boundaries
 	 */
-	function build(type, nodes) {
+	function build(type, nodes, boundaries) {
 		if (0 === nodes.length) {
-			return;
+			return boundaries;
 		}
 		var node = Dom.upWhile(nodes[0], hasInlineStyle);
 		if (Html.isListItem(node) && !Dom.prevSibling(node)) {
@@ -188,10 +209,20 @@ define([
 			'Lists.format#Cannot create ' + type + ' inside of a ' + node.parentNode.nodeName
 		);
 		var list = node.ownerDocument.createElement(type);
-		var grouping = groupNodes(nodes);
+		var grouping = groupNodes(nodes, boundaries);
 		Dom.insert(list, node);
-		Dom.move(grouping.groups.reduce(reduceGroup, []), list);
+		var preservation = {};
+		var reducer = Fn.partial(reduceGroup, grouping.preserved, preservation);
+		Dom.move(grouping.groups.reduce(reducer, []), list);
 		grouping.parents.forEach(removeInvisibleNodes);
+		var preserved = boundaries.concat();
+		Maps.forEach(preservation, function (boundary, index) {
+			preserved[parseInt(index, 10)] = boundary;
+		});
+		return [
+			preservation[0] || preserved[0],
+			preservation[1] || preserved[1]
+		];
 	}
 
 	/**
@@ -214,8 +245,7 @@ define([
 				return !Html.hasLinebreakingStyle(node)
 				    && !Dom.isEditingHost(node.parentNode);
 			});
-			build(type, collectSiblings(node, node));
-			return [start, end];
+			return build(type, collectSiblings(node, node), [start, end]);
 		}
 		var cac = Boundaries.commonContainer(start, end);
 		if (!Html.hasLinebreakingStyle(cac)) {
@@ -224,8 +254,7 @@ define([
 				    && !isCollectLimit(node.parentNode)
 				    && !Dom.isEditingHost(node.parentNode);
 			});
-			build(type, collectSiblings(node, node));
-			return [start, end];
+			return build(type, collectSiblings(node, node), [start, end]);
 		}
 		var startNode = Dom.upWhile(Boundaries.nextNode(start), function (node) {
 			return !isCollectLimit(node)
@@ -254,8 +283,7 @@ define([
 			endNode = startNode;
 		}
 		*/
-		build(type, collectSiblings(startNode, endNode));
-		return [start, end];
+		return build(type, collectSiblings(startNode, endNode), [start, end]);
 	}
 
 	/**

@@ -359,6 +359,7 @@ define([
 	exports['html']['isHeading']               = Html.isHeading;
 	exports['html']['isTextLevelSemanticNode'] = Html.isTextLevelSemanticNode;
 	exports['html']['isVoidNode']              = Html.isVoidNode;
+	exports['html']['walkBetween']             = Html.walkBetween;
 
 	exports['images'] = {};
 	exports['images']['insert'] = Images.insert;
