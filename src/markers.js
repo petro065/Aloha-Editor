@@ -27,7 +27,7 @@ define([
 ) {
 	'use strict';
 
-	var augmentedMarks = {
+	var enhancedMarks = {
 		'TEXT_LEFT'      : '▓[',
 		'TEXT_RIGHT'     : ']▓',
 		'ELEMENT_LEFT'   : '▓{',
@@ -50,12 +50,12 @@ define([
 	 *
 	 * @param  {!Boundary} start
 	 * @param  {!Boundary} end
-	 * @param  {boolean=}  augment
+	 * @param  {boolean=}  enhance
 	 * @return {Array.<Boundary>}
 	 * @memberOf markers
 	 */
-	function insert(start, end, augment) {
-		var markers = augment ? augmentedMarks : marks;
+	function insert(start, end, enhance) {
+		var markers = enhance ? enhancedMarks : marks;
 		var startContainer = Boundaries.container(start);
 		var endContainer = Boundaries.container(end);
 		var doc = startContainer.ownerDocument;
@@ -77,11 +77,11 @@ define([
 	 * Insert a single boundary marker at the given boundary.
 	 *
 	 * @param  {!Boundary} boundary
-	 * @param  {boolean=}  augment
+	 * @param  {boolean=}  enhance
 	 * @return {Boundary}
 	 */
-	function insertSingle(boundary, augment) {
-		var markers = augment ? augmentedMarks : marks;
+	function insertSingle(boundary, enhance) {
+		var markers = enhance ? enhancedMarks : marks;
 		var container = Boundaries.container(boundary);
 		var marker = container.ownerDocument.createTextNode(
 			Boundaries.isTextBoundary(boundary)
@@ -183,10 +183,10 @@ define([
 	 * @private
 	 * @param  {!Boundary} start
 	 * @param  {!Boundary} end
-	 * @param  {augment=}  augment
+	 * @param  {enhance=}  enhance
 	 * @return {string}
 	 */
-	function show(start, end, augment) {
+	function show(start, end, enhance) {
 		var single = !end;
 
 		end = end || start;
@@ -223,12 +223,12 @@ define([
 		endPath = root.concat(endPath);
 
 		if (single) {
-			insertSingle(Paths.toBoundary(clone, startPath), augment);
+			insertSingle(Paths.toBoundary(clone, startPath), enhance);
 		} else {
 			insert(
 				Paths.toBoundary(clone, startPath),
 				Paths.toBoundary(clone, endPath),
-				augment
+				enhance
 			);
 		}
 
@@ -252,23 +252,23 @@ define([
 	 * Returns string representation of the given boundary boundaries tuple or
 	 * range.
 	 *
-	 * If the option argument augment is set to true, the markers will be
+	 * If the option argument enhance is set to true, the markers will be
 	 * rendered with an extra character along side it to make it easier to see
 	 * it in the output.
 	 *
 	 * @param  {!Boundary|Array.<Boundary>|Range} selection
-	 * @param  {boolean=}                         augment
+	 * @param  {boolean=}                         enhance
 	 * @return {string}
 	 * @memberOf markers
 	 */
-	function hint(selection, augment) {
+	function hint(selection, enhance) {
 		if (Misc.defined(selection.length)) {
 			return ('string' === typeof selection[0].nodeName)
-			     ? show(selection, augment)
-			     : show(selection[0], selection[1], augment);
+			     ? show(selection, enhance)
+			     : show(selection[0], selection[1], enhance);
 		}
 		var boundaries = rawBoundariesFromRange(selection);
-		return show(boundaries[0], boundaries[1], augment);
+		return show(boundaries[0], boundaries[1], enhance);
 	}
 
 	return {

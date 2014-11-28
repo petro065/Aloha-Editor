@@ -71,7 +71,7 @@
 		'#': Fn.partial(Lists.format, 'OL')
 	};
 
-	function handleMentions(event) {
+	function handleAutoList(event) {
 		if ('keydown' !== event.type || Keys.CODES['space'] !== event.keycode) {
 			return event;
 		}
@@ -90,6 +90,10 @@
 		return event;
 	}
 
-	Editor.stack.unshift(handleMentions);
+	for (var i = 0; i < Editor.stack.length; i++) {
+		console.log(Editor.stack[i].name);
+	}
+
+	Editor.stack.unshift(handleAutoList);
 
 }(window.aloha));

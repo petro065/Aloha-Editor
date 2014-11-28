@@ -32,6 +32,7 @@ define([
 	'maps',
 	'markers',
 	'metaview',
+	'mentions',
 	'mouse',
 	'overrides',
 	'paste',
@@ -69,6 +70,7 @@ define([
 	Maps,
 	Markers,
 	Metaview,
+	Mentions,
 	Mouse,
 	Overrides,
 	Paste,
@@ -401,6 +403,9 @@ define([
 
 	exports['metaview'] = {};
 	exports['metaview']['toggle'] = Metaview.toggle;
+
+	exports['mentions'] = {};
+	exports['mentions']['hooks'] = Mentions.hooks;
 
 	exports['mouse'] = {};
 	exports['mouse']['handleMouse'] = Mouse.handleMouse;
