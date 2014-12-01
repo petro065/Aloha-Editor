@@ -405,7 +405,8 @@ define([
 	exports['metaview']['toggle'] = Metaview.toggle;
 
 	exports['mentions'] = {};
-	exports['mentions']['hooks'] = Mentions.hooks;
+	exports['mentions']['hooks']    = Mentions.hooks;
+	exports['mentions']['triggers'] = Mentions.triggers;
 
 	exports['mouse'] = {};
 	exports['mouse']['handleMouse'] = Mouse.handleMouse;

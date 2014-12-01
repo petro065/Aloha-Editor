@@ -2,6 +2,7 @@ define([
 	'dom',
 	'keys',
 	'html',
+	'arrays',
 	'editing',
 	'boundaries',
 	'traversing'
@@ -9,6 +10,7 @@ define([
 	Dom,
 	Keys,
 	Html,
+	Arrays,
 	Editing,
 	Boundaries,
 	Traversing
@@ -28,7 +30,7 @@ define([
 		return '';
 	}
 
-	function person(start, end) {
+	function create(start, end) {
 		var element = Html.parse(
 			'<span class="aloha-mention" style="background:whitesmoke;border-radius:10px;"></span>',
 			Boundaries.document(start)
@@ -37,16 +39,9 @@ define([
 		return element;
 	}
 
-	function other(start, end) {
-		return [start, end];
-	}
-
 	var hooks = {};
 
-	var triggers = {
-		'@': person,
-		'!': other
-	};
+	var triggers = ['@', '!'];
 
 	function keypress(event) {
 		var boundary = event.selection.boundaries[0];
@@ -64,17 +59,16 @@ define([
 			return event;
 		}
 		var key = Keys.parseKeys(event.nativeEvent);
-		var trigger = triggers[key.chr];
-		if (!trigger) {
+		if (!Arrays.contains(triggers, key.chr)) {
 			return event;
 		}
 		var prev = Traversing.prev(boundary, 'visual');
 		if (!nextChar(prev).trim()) {
-			elem = trigger(prev, boundary);
+			elem = create(prev, boundary);
 			boundary = Boundaries.fromEndOfNode(elem);
 			event.selection.boundaries = [boundary, boundary];
 			if (hooks.enter) {
-				hooks.enter(event, elem);
+				hooks.enter(event, elem, key.chr);
 			}
 		}
 		return event;
@@ -93,14 +87,14 @@ define([
 			boundaries = Editing.remove(boundaries[0], boundaries[1]);
 			if (Boundaries.isAtEnd(boundaries[0])) {
 				var boundary = Boundaries.fromBehindOfNode(elem);
-				event.selection.boundaries = [boundary, boundary];
 				// prevent default enter behaviour (hackish)
 				event.keycode = -1;
+				event.selection.boundaries = [boundary, boundary];
 				if (hooks.exit) {
 					hooks.exit(event, elem);
 				}
 			} else {
-				// split `elem`
+				// TODO split `elem`
 			}
 		}
 		return event;
@@ -117,6 +111,7 @@ define([
 
 	return {
 		handleMentions : handleMentions,
+		triggers       : triggers,
 		hooks          : hooks
 	};
 
