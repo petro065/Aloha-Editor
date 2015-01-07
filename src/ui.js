@@ -223,17 +223,17 @@ define([
 	 * @memberOf ui
 	 */
 	var commands = {
-		'p'         : { node : 'p'                         },
-		'h1'        : { node : 'h1'                        },
-		'h2'        : { node : 'h2'                        },
-		'h3'        : { node : 'h3'                        },
-		'h4'        : { node : 'h4'                        },
-		'ol'        : { node : 'ol'                        },
-		'ul'        : { node : 'ul'                        },
-		'pre'       : { node : 'pre'                       },
-		'bold'      : { node : 'b', override : 'bold'      },
-		'italic'    : { node : 'i', override : 'italic'    },
-		'underline' : { node : 'u', override : 'underline' },
+		'p'         : { 'node' : 'p'                           },
+		'h1'        : { 'node' : 'h1'                          },
+		'h2'        : { 'node' : 'h2'                          },
+		'h3'        : { 'node' : 'h3'                          },
+		'h4'        : { 'node' : 'h4'                          },
+		'ol'        : { 'node' : 'ol'                          },
+		'ul'        : { 'node' : 'ul'                          },
+		'pre'       : { 'node' : 'pre'                         },
+		'bold'      : { 'node' : 'b', 'override' : 'bold'      },
+		'italic'    : { 'node' : 'i', 'override' : 'italic'    },
+		'underline' : { 'node' : 'u', 'override' : 'underline' },
 		'unformat'  : {
 			'state'  : Fn.returnFalse,
 			'action' : removeFormatting,

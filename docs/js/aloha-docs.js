@@ -9,19 +9,22 @@
 			mode     : aloha.dom.getAttr(elem, 'data-syntax') || 'javascript',
 			readOnly : true
 		});
-		var html = elem.innerHTML
-		    .replace(/<span class="cm-operator">&lt;\*<\/span>/g, '<u>')
-		    .replace(/<span class="cm-operator">\*&gt;<\/span>/g, '</u>')
-		    .replace(/{%/g, '<u>').replace(/%}/g, '</u>');
+		var html = elem.innerHTML;
 		var snippetLinksCount = 0;
-		elem.innerHTML = html.replace(
-			/<span class="cm-operator">&lt;&amp;<\/span>(.*?)<span class="cm-operator">&amp;&gt;<\/span>/g,
-			function (match, code) {
-				return '<span class="snippet-anchor" data-snippet-link="'
-				     + (++snippetLinksCount)
-				     + '">' + code + '</span>';
-			}
+		var regex = new RegExp(
+			'<span class="cm-operator">&lt;&amp;<\/span>'
+			+ '(.*?)'
+			+ '<span class="cm-operator">&amp;&gt;<\/span>'
+			+ '|'
+			+ '{&amp;(.*?)&amp;}',
+			'g'
 		);
+		html = html.replace(regex, function (match, code, html) {
+			return '<span class="snippet-anchor" data-snippet-link="'
+			     + (++snippetLinksCount)
+			     + '">' + (html || code) + '</span>';
+		});
+		elem.innerHTML = html;
 	});
 
 	var $window = $(window);
@@ -59,7 +62,7 @@
 	function findLinks(domain, link) {
 		return $(
 			'[data-snippet-link="' + domain + '.' + link + '"],' +
-			'span[data-snippet-link="' + link + '"]'
+			'[data-snippet-link="' + domain + '"] span[data-snippet-link="' + link + '"]'
 		);
 	}
 

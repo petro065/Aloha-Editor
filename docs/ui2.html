@@ -67,7 +67,7 @@
 						on the same element that was given to
 						<a href="http://alohaeditor.org/api/aloha.html#aloha"
 							data-snippet-link="aloha.1"
-							class="snippet-link">aloha()</a> .
+							class="snippet-link">aloha()</a>.
 					</p>
 
 					<p>
@@ -150,7 +150,7 @@ $('.big-bad-bold-button')
 						clicked will be formatted bold.
 					</p>
 
-					<button>Try it out!</button>
+					// Try it!
 
 					<p>
 						There are a number of other formatting commands that
@@ -185,15 +185,22 @@ $('.big-bad-bold-button')
 					</p>
 
 					<p>
-						These commands are just objects with properties that help to
-						define a formatting operation.
+						These commands are just objects with properties that
+						help to define a formatting operation. For example, this
+						is what the the
+						<a href="#"><code>bold command</code></a> looks like:
 					</p>
+
+					<div class="snippet">
+{
+	node     : 'b',
+	override : 'bold'
+}
+					</div>
 
 					<p>
-						Let's use a for-loop to bind 4 of these commands to buttons.
+						Now let's bind 4 of these commands to buttons at once. First the HTML...
 					</p>
-
-					<p>First the HTML ...</p>
 
 					<div class="snippet" data-syntax='text/html'>
 &lt;button class="action-bold"&gt;B&lt;/button&gt;
@@ -202,7 +209,7 @@ $('.big-bad-bold-button')
 &lt;button class="action-unformat"&gt;✘&lt;/button&gt;
 					</div>
 
-					<p>Then some JavaScript ...</p>
+					<p>... then some JavaScript...</p>
 
 					<div class="snippet">
 for (var command in aloha.ui.commands) {
@@ -213,9 +220,9 @@ for (var command in aloha.ui.commands) {
 }
 					</div>
 
-					<p>And done.</p>
+					<p>... and done.</p>
 
-					// fiddle
+					// Try it!
 
 				</section>
 
@@ -231,39 +238,53 @@ for (var command in aloha.ui.commands) {
 				<section>
 
 					<p>
-						But what if we want to the underline button to be able to
-						effect one editable and not the other?
+						But what if we want the underline button to be able to
+						effect one editable and not the other? We can do this
+						with a little more code. We will need to pass 2
+						arguments into
+						<a href="http://alohaeditor.org/api/ui.html#command">
+							<code>aloha.ui.command</code></a>
+						instead of 1.
 					</p>
 
 					<p>
-						To do this we need to pass 2 arguments into
-						<a href="http://alohaeditor.org/api/ui.html#command"> <code>aloha.ui.command</code></a>
-						instead of 1. You'll see why in a minute. First let add some
-						suffixes to our button classnames. We add {%1%} to demark
-						buttons that should effect editable 1 and {%2%} to demark
-						buttons that should effect editable 2.
+						First let add some suffixes to our button classnames. We
+						add
+						<a class="snippet-link" data-snippet-link="config-markup.1">1</a>
+						to demark buttons that should effect
+						<a class="snippet-link" data-snippet-link="config-code.2">editable 1</a>
+						and
+						<a class="snippet-link" data-snippet-link="config-markup.2">2</a>
+						to demark buttons that should effect editable
+						<a class="snippet-link" data-snippet-link="config-code.2">editable 2</a>.
 					</p>
 
-					<div class="snippet" data-syntax='text/html'>
-&lt;button class="action-bold-{%1%}"&gt;B&lt;/button&gt;
-&lt;button class="action-underline-{%2%}"&gt;U&lt;/button&gt;
+					<div class="snippet" data-snippet-link="config-markup" data-syntax="text/html">
+&lt;button class="action-bold-{&1&}"&gt;B&lt;/button&gt;
+&lt;button class="action-underline-{&2&}"&gt;U&lt;/button&gt;
 					</div>
 
-					<div class="snippet">
-var <*editables*> = aloha.dom.query('.editables', document).map(aloha);
+					<div class="snippet" data-snippet-link="config-code">
+var <&editables&> = aloha.dom.query('.editables', document).map(aloha);
 for (var editable in editables) {
 	for (var command in aloha.ui.commands) {
-		$('.action-' + command + '-' + <*editable.id*>).on(
+		$('.action-' + command + '-' + <&editable.id&>).on(
 			'click',
-			aloha.ui.command(<*editable*>, aloha.ui.commands[command])
+			<&aloha.ui.command&>(editable, aloha.ui.commands[command])
 		);
 	}
 }
 					</div>
 
 					<p>
-						Bare in mind that <code>aloha.ui.command</code> can also
-						take an array of <a href="http://alohaeditor.org/api/editables.html">editables</a>
+						Bare in mind that
+						<a href="#"
+							data-snippet-link="config-code.3"
+							class="snippet-link">aloha.ui.command</a>
+						can also take an array of
+						<a href="http://alohaeditor.org/api/editables.html"
+							data-snippet-link="config-code.1"
+							class="snippet-link">editables</a>
 						as its first argument to bind a single button to more than
 						just one editables.
 					</p>
