@@ -194,9 +194,8 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	font-size: 0.8em;
 	border: 0;
 	color: #c9c8c5;
-}
-#followTheFrog a:hover { color: #797875; }
-#caret-tease { border-bottom: 2px dashed #edede8; }
+} #followTheFrog a:hover { color: #797875; }
+#caret-tease { border-bottom: 3px dotted #edede8; }
 .aloha-caret::before {
 	content: '';
 	background: url(http://aloha-editor.org/Content.Node/img/froggy.png);
@@ -208,6 +207,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	height: 40px;
 	top: -30px;
 	left: -20px;
+	-webkit-animation: hopping 800ms ease-out infinite alternate
 }
 @media (max-width: 768px) {
 	header {
@@ -223,9 +223,13 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	}
 	header h3 span { margin-bottom: 10px; }
 }
+@-webkit-keyframes hopping {
+	0%   { -webkit-transform: translate3d(0px,-10px,0px); }
+	100% { -webkit-transform: translate3d(0px,0px,0px);   }
+}
 @-webkit-keyframes intro {
 	0%   { -webkit-transform: rotate3d(1,0,0,40deg) translate3d(200px,0px,400px); }
-	100% { -webkit-transform: rotate3d(1,0,0,0deg)  translate3d(0px,0px,0px);     }
+	100% { -webkit-transform: rotate3d(1,0,0,0deg)  translate3d(0px,85px,0px);    }
 	/* http://stackoverflow.com/questions/15194313/webkit-css-transform3d-position-fixed-issue#15256339 */
 }
 @-moz-keyframes intro {
@@ -282,20 +286,46 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 }
 .cm-s-default pre { padding: 0em 1.5em; }
 
-.CodeMirror {
-	height: auto;
-	background: transparent;
+.snippet-link,
+.snippet-anchor {
+	padding: 0 0.3em;
+	font-family: monospace;
+	background: #edede8;
+	border-radius: 1em;
+	-webkit-transition: background 500ms cubic-bezier(.2,.3,.25,.9);
+	   -moz-transition: background 500ms cubic-bezier(.2,.3,.25,.9);
+	    -ms-transition: background 500ms cubic-bezier(.2,.3,.25,.9);
+	     -o-transition: background 500ms cubic-bezier(.2,.3,.25,.9);
+	        transition: background 500ms cubic-bezier(.2,.3,.25,.9);
+}
+.snippet-link:hover,
+.snippet-anchor:hover,
+.snippet-anchor.snippet-highlight,
+.snippet-link.snippet-highlight {
+	background: #ffd47e;
+	border: 0;
+	-webkit-animation: glow 500ms ease-out infinite alternate;
+	-moz-animation: glow 500ms ease-out infiniten alternate;
+}
+.snippet-link { padding: 0 0.3em; }
+
+@-webkit-keyframes glow {
+    0%   { box-shadow: 0 0 0    #ffd47e; }
+    100% { box-shadow: 0 0 .5em #ffd47e; }
+}
+@-moz-keyframes glow {
+    0%   { box-shadow: 0 0 0    #ffd47e; }
+    100% { box-shadow: 0 0 .5em #ffd47e; }
 }
 
 .snippet {
 	position: relative;
 	-moz-osx-font-smoothing: grayscale;
 	 -webkit-font-smoothing: antialiased;
-		-moz-font-smoothing: antialiased;
-			 font-smoothing: antialiased;
+	    -moz-font-smoothing: antialiased;
+	         font-smoothing: antialiased;
 	width: 100%;
 	margin: 0 0 1em;
-	padding: 1em 0;
 	background: #f9f9f5;
 	border: 1px solid #edede8;
 	border-radius: 5px;
@@ -328,6 +358,13 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 		rgba(249, 249, 245, 1) 1em
 	);
 }
+.CodeMirror {
+	padding: 1em 0;
+	height: auto;
+	background: transparent;
+}
+.CodeMirror-lines { padding: 0.5em 0; }
+
 
 /*
 .cm-header { font-weight: bold }

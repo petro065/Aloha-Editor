@@ -9,10 +9,19 @@
 			mode     : aloha.dom.getAttr(elem, 'data-syntax') || 'javascript',
 			readOnly : true
 		});
-		elem.innerHTML = elem.innerHTML
+		var html = elem.innerHTML
 		    .replace(/<span class="cm-operator">&lt;\*<\/span>/g, '<u>')
 		    .replace(/<span class="cm-operator">\*&gt;<\/span>/g, '</u>')
 		    .replace(/{%/g, '<u>').replace(/%}/g, '</u>');
+		var snippetLinksCount = 0;
+		elem.innerHTML = html.replace(
+			/<span class="cm-operator">&lt;&amp;<\/span>(.*?)<span class="cm-operator">&amp;&gt;<\/span>/g,
+			function (match, code) {
+				return '<span class="snippet-anchor" data-snippet-link="'
+				     + (++snippetLinksCount)
+				     + '">' + code + '</span>';
+			}
+		);
 	});
 
 	var $window = $(window);
@@ -47,7 +56,42 @@
 		return '';
 	}());
 
+	function findLinks(domain, link) {
+		return $(
+			'[data-snippet-link="' + domain + '.' + link + '"],' +
+			'span[data-snippet-link="' + link + '"]'
+		);
+	}
+
+	function findLinksFromElement($elem) {
+		return findLinks(
+			$elem.closest('.snippet').attr('data-snippet-link'),
+			$elem.attr('data-snippet-link')
+		);
+	}
+
 	$(function () {
+		$('a.snippet-link').each(function (i, elem) {
+			var $elem = $(elem);
+			var linkage = $elem.attr('data-snippet-link').split('.');
+			var domain = linkage[0];
+			var link = linkage[1];
+			$elem.hover(function () {
+				findLinks(domain, link).addClass('snippet-highlight');
+			}, function () {
+				findLinks(domain, link).removeClass('snippet-highlight');
+			});
+		});
+		$('span.snippet-anchor').hover(
+			function (event) {
+				findLinksFromElement($(event.target)
+					.closest('.snippet-anchor')).addClass('snippet-highlight');
+			},
+			function (event) {
+				findLinksFromElement($(event.target)
+					.closest('.snippet-anchor')).removeClass('snippet-highlight');
+			}
+		);
 		if (0 === $('header .bg').length) {
 			return;
 		}

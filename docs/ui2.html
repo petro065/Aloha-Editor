@@ -52,37 +52,41 @@
 					<div class="snippet" data-syntax='text/html'>
 						&lt;script src="http://aloha-editor.org/download/aloha.min.js"&gt;&lt;/script&gt;
 					</div>
-					<div class="snippet">aloha(document.querySelector('#editable'))</div>
+					<div class="snippet" data-snippet-link="aloha"><&aloha&>(document.querySelector('#editable'))</div>
+
+					<p>
+						<a href="http://alohaeditor.org/api/aloha.html#aloha"
+							data-snippet-link="aloha.1" class="snippet-link">aloha()</a>
+						transforms the element given to it into a rich-text
+						editing canvas.
+					</p>
+
+					<p>
+						You can deactivate editing by invoking
+						<a href="http://alohaeditor.org/api/aloha.html#mahalo"><code>aloha.mahalo()</code></a>
+						on the same element that was given to
+						<a href="http://alohaeditor.org/api/aloha.html#aloha"
+							data-snippet-link="aloha.1"
+							class="snippet-link">aloha()</a> .
+					</p>
 
 					<p>
 						You can initialize multiple editables at once with this
 						line of code:
 					</p>
 
-					<div class="snippet">aloha.dom.query('.editable', document).forEach(aloha)</div>
+					<div class="snippet" data-snippet-link="aloha">aloha.dom.query('.editable', document).forEach(<&aloha&>)</div>
 
 					<p>
-						<a href="http://alohaeditor.org/api/aloha.html#aloha"><code>aloha()</code></a>
-						transforms the element given to it into a rich-text
-						editing canvas.
-					</p>
-
-					<p>
-						To deactivate editing, simply invoke
-						<a href="http://alohaeditor.org/api/aloha.html#mahalo"><code>aloha.mahalo()</code></a>
-						on the element that was given to <code>aloha()</code>.
-					</p>
-
-					<p>
-						Once you've created an editing canvas through <code>aloha()</code>
+						Once you've initialized your editable
 						<span id="caret-tease" class="editable"> you will
 						see that Aloha Editor uses a blinking DIV element as the
 						caret</span>.  This caret is the minimal visual user interface
-						(<a href="#caretStylingFiddle">which you can style and
-						animate with CSS, by the way</a>).
-						Sooner or later, however, you'll need more than just a
-						caret for a UI, so the next section covers how to add a
-						simple bold button to your UI.
+						(<!-- a href="#caretStylingFiddle" -->which you can style and
+						animate with CSS, by the way).
+						But sooner or later, you'll need more for UI than just a
+						caret, so the next section shows you how to add a simple
+						bold button to your UI.
 					</p>
 				</section>
 
@@ -97,17 +101,22 @@
 
 				<section>
 					<p>
-						To add a simple bold button, begin by putting the
-						following markup somewhere into the body your document:
+						These instructions will show you how to add a button
+						that, when clicked, will format the selected content in
+						an editable bold.
+					</p>
+					<p>
+						Begin by putting the following markup somewhere into the
+						body your document:
 					</p>
 
 					<div class="snippet" data-syntax='text/html'>
-						&lt;button class="my-big-bold-button"&gt;B&lt;/button&gt;
+						&lt;button class="big-bad-bold-button"&gt;B&lt;/button&gt;
 					</div>
 
 					<p>
-						Then you need to bind the <a href="#"><code>bold</code>
-						command</a> to be fired when this element is clicked.
+						The next step is to bind the <a href="#"><code>bold</code>
+						command</a> this element.
 					</p>
 
 					<blockquote>
@@ -117,15 +126,25 @@
 						<a href="http://vanilla-js.com">pick your own poison</a>.
 					</blockquote>
 
-					<div class="snippet">
-$('.my-big-bold-button')
-	.on('click', aloha.ui.command(aloha.ui.commands.bold))
+					<div class="snippet" data-snippet-link="binding">
+$('.big-bad-bold-button')
+	.on('click', <&aloha.ui.command&>(<&aloha.ui.commands.bold&>))
 					</div>
 
 					<p>
-						<a href="#"><code>aloha.ui.command</code></a> generates an event
-						handler, and uses <a href="#"><code>aloha.ui.commands.bold</code></a>
-						to define what that event handler should do when the
+						There are two important peices to code snippet above:
+						<a href="#" data-snippet-link="binding.1"
+							class="snippet-link">aloha.ui.command()</a> and
+						<a href="#" data-snippet-link="binding.2"
+							class="snippet-link">aloha.ui.commands.bold</a>.
+					</p>
+
+					<p>
+						<a href="#" data-snippet-link="binding.1" class="snippet-link">aloha.ui.command</a> is a
+						function that generates an event handler, and uses a map
+						of properties defined as
+						<a href="#" data-snippet-link="binding.2" class="snippet-link">aloha.ui.commands.bold</a>
+						to determine what that event handler should do when the
 						button is clicked. In this case, any content that is
 						selected inside of an editable when this  button is
 						clicked will be formatted bold.
@@ -134,9 +153,11 @@ $('.my-big-bold-button')
 					<button>Try it out!</button>
 
 					<p>
-						There are a number of formatting commands that come with Aloha
-						Editor out of the box. You've just seen the
-						<code>aloha.ui.commands.bold</code> command in action, but there are
+						There are a number of other formatting commands that
+						come with Aloha Editor out of the box. You've just seen
+						the
+						<a href="#"><code>aloha.ui.commands.bold</code></a>
+						command in action, but there are
 						<a href="http://alohaeditor.org/api/ui.html#commands">a few more</a>.
 						The next section explains how to bind many buttons in
 						simple way.
@@ -156,9 +177,11 @@ $('.my-big-bold-button')
 				<section>
 
 					<p>
-						<code>aloha.ui.commands</code> contains a number of editing
-						commands that can be bound to execute formatting from event
-						handlers. <code>aloha.ui.commands.bold</code> is on of them.
+						<a href="#"><code>aloha.ui.commands</code></a>
+						contains a set of editing commands that can be bound to
+						elements in order to be executed from event handlers.
+						<a href="#"><code>aloha.ui.commands.bold</code></a>
+						is on of them.
 					</p>
 
 					<p>
