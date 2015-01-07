@@ -18,6 +18,7 @@
 
 		<div class="★">
 			<header class="title"><div>
+				<div class="bg"></div>
 				<div class="editable">
 					<h1>Aloha Editor UI Guide</h1>
 					<h2>
@@ -35,6 +36,7 @@
 			<article>
 
 				<header id="include-and-invoke-aloha"><div>
+					<div class="bg"></div>
 					<img src="http://aloha-editor.org/Content.Node/img/froggy.png"
 						alt="#followTheFrog" title="#followTheFrog"
 						style="display: block; height: 90px; margin: 0 auto 90px;" />
@@ -54,48 +56,49 @@
 
 					<p>
 						You can initialize multiple editables at once with this
-						simply trick:
+						line of code:
 					</p>
 
 					<div class="snippet">aloha.dom.query('.editable', document).forEach(aloha)</div>
 
 					<p>
 						<a href="http://alohaeditor.org/api/aloha.html#aloha"><code>aloha()</code></a>
-						will transform the given element into an HTML editing canvas
-						in which you can start typing and using keyboard commands to
-						format content bold, italic, etc.
+						transforms the element given to it into a rich-text
+						editing canvas.
 					</p>
 
 					<p>
 						To deactivate editing, simply invoke
 						<a href="http://alohaeditor.org/api/aloha.html#mahalo"><code>aloha.mahalo()</code></a>
-						on the DOM element that was made editable through
-						<code>aloha()</code>.
+						on the element that was given to <code>aloha()</code>.
 					</p>
 
 					<p>
-						When you invoke <code>aloha()</code> on an element
+						Once you've created an editing canvas through <code>aloha()</code>
 						<span id="caret-tease" class="editable"> you will
 						see that Aloha Editor uses a blinking DIV element as the
 						caret</span>.  This caret is the minimal visual user interface
-						(<a href="#caretStylingFiddle">which you can style with CSS, by the way</a>).
-						But sooner or later you'll probably need more than just
-						a caret, so the next section will cover how you can add
-						a simple bold button.
+						(<a href="#caretStylingFiddle">which you can style and
+						animate with CSS, by the way</a>).
+						Sooner or later, however, you'll need more than just a
+						caret for a UI, so the next section covers how to add a
+						simple bold button to your UI.
 					</p>
 				</section>
+
 			</article>
 
 			<article>
 
 				<header id="add-and-bind-a-button"><div>
+					<div class="bg"></div>
 					<h2><span>Leap 2:</span> Add &amp; Bind a Button</h2>
 				</div></header>
 
 				<section>
 					<p>
 						To add a simple bold button, begin by putting the
-						following markup somewhere into the body your document.
+						following markup somewhere into the body your document:
 					</p>
 
 					<div class="snippet" data-syntax='text/html'>
@@ -103,14 +106,14 @@
 					</div>
 
 					<p>
-						Then you need to bind the <a href="#"><code>bold</code></a>
-						command to be fired on this element's click event.
+						Then you need to bind the <a href="#"><code>bold</code>
+						command</a> to be fired when this element is clicked.
 					</p>
 
 					<blockquote>
 						NB: We will use the jQuery API for these code snippets
-						because it's terse and very familiar to most. This is
-						not a requirement for Aloha Editor; you are free to
+						because it's terse and familiar to most. This is not a
+						requirement for Aloha Editor, however; you are free to
 						<a href="http://vanilla-js.com">pick your own poison</a>.
 					</blockquote>
 
@@ -123,7 +126,9 @@ $('.my-big-bold-button')
 						<a href="#"><code>aloha.ui.command</code></a> generates an event
 						handler, and uses <a href="#"><code>aloha.ui.commands.bold</code></a>
 						to define what that event handler should do when the
-						button is clicked.
+						button is clicked. In this case, any content that is
+						selected inside of an editable when this  button is
+						clicked will be formatted bold.
 					</p>
 
 					<button>Try it out!</button>
@@ -133,8 +138,8 @@ $('.my-big-bold-button')
 						Editor out of the box. You've just seen the
 						<code>aloha.ui.commands.bold</code> command in action, but there are
 						<a href="http://alohaeditor.org/api/ui.html#commands">a few more</a>.
-						The next section explains how to bind many buttons in simple
-						way.
+						The next section explains how to bind many buttons in
+						simple way.
 					</p>
 
 				</section>
@@ -144,6 +149,7 @@ $('.my-big-bold-button')
 			<article>
 
 				<header id="add-more-buttons"><div>
+					<div class="bg"></div>
 					<h2><span>Leap 3:</span> Add More Buttons</h2>
 				</div></header>
 
@@ -195,6 +201,7 @@ for (var command in aloha.ui.commands) {
 			<article>
 
 				<header id="per-editable-binding"><div>
+					<div  class="bg"></div>
 					<h2><span>Leap 4:</span> Per-editable binding</h2>
 				</div></header>
 
@@ -243,7 +250,7 @@ for (var editable in editables) {
 			</article>
 		</div>
 
-		<div id="something-awesome">Now build something awesome!</div>
+		<div id="something-amazing">Now build something amazing!</div>
 
 		<div id="disqus_thread"></div>
 
