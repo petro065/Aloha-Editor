@@ -284,7 +284,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	margin: 0px;
 	padding: 5px 10px;
 }
-.cm-s-default pre { padding: 0em 1.5em; }
+.cm-s-default pre>span { margin: 0 2.5em 0 1em; }
 
 .snippet-link,
 .snippet-anchor {
