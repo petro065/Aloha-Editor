@@ -300,6 +300,7 @@ define([
 	exports['dragdrop']['isDraggable'] = DragDrop.isDraggable;
 
 	exports['editables'] = {};
+	exports['editables']['is']           = Editables.is;
 	exports['editables']['fromElem']     = Editables.fromElem;
 	exports['editables']['fromBoundary'] = Editables.fromBoundary;
 	exports['editables']['create']       = Editables.create;
@@ -592,6 +593,9 @@ define([
 		}
 		if (Arrays.is(obj)) {
 			return Boundaries.is(obj) ? 'Boundary' : 'Array';
+		}
+		if (Editables.is(obj)) {
+			return 'Editable';
 		}
 		if (Dom.isElementNode(obj)) {
 			return 'Element';

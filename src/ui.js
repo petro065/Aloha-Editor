@@ -171,7 +171,7 @@ define([
 		          : Fn.partial(Arrays.contains, editables);
 		return function (event) {
 			// TODO: I'm sorry. I'll fix this!
-			var editor = (editables[0] || Dom.documentWindow(event.target.ownerDocument).aloha).editor;
+			var editor = (editables[0] || Dom.documentWindow(event.target.ownerDocument)['aloha'])['editor'];
 			var selection = editor.selection;
 			if (!selection || !selection.boundaries) {
 				return;

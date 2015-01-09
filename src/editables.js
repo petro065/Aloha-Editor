@@ -125,11 +125,25 @@ define([
 		return editable;
 	}
 
+	/**
+	 * Returns true if the given value is an editable.
+	 *
+	 * @param  {*} obj
+	 * @return {boolean}
+	 * @memberOf editables
+	 */
+	function is(obj) {
+		return obj
+		    && obj.hasOwnProperty
+		    && obj.hasOwnProperty('!aloha-expando-node-id');
+	}
+
 	return {
 		fromElem         : fromElem,
 		fromBoundary     : fromBoundary,
 		assocIntoEditor  : assocIntoEditor,
 		dissocFromEditor : dissocFromEditor,
+		is               : is,
 		close            : close,
 		create           : create,
 		destroy          : destroy

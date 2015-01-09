@@ -38,6 +38,7 @@ function build {
 	cd $src
 	
 	versioned=$entry.versioned
+
 	sed s/%buildcommit%/$ish/ <(cat $entry.js) > $versioned.js
 
 	find ./ -name "*.js" | \
@@ -55,12 +56,12 @@ function build {
 			$sourcemap \
 		> $pwd/build/$target
 
-	rm $versioned.js
-
 	if [[ -n $sourcemap ]]; then
 		echo -e "\n//# sourceMappingURL=aloha.js.map" >> $pwd/build/$target
 		cp -r $pwd/src/* $pwd/build
 		printf "$tick Source maps placed in $pwd/build.\n"
+	else
+		rm $versioned.js
 	fi
 
 	printf "$tick Building is complete.\n"

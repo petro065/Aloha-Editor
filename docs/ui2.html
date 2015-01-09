@@ -12,6 +12,8 @@
 		<link href='http://fonts.googleapis.com/css?family=Droid+Serif:400|Roboto:300,400,700' rel='stylesheet' type='text/css'>
 		<link href='codemirror-4.2/lib/codemirror.css' rel='stylesheet' type='text/css'>
 		<link href='followthefrog.css' rel='stylesheet' type='text/css'>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+		<script src="build/aloha.min.js"></script>
 	</head>
 
 	<body>
@@ -150,7 +152,16 @@ $('.big-bad-bold-button')
 						clicked will be formatted bold.
 					</p>
 
-					// Try it!
+					<div id="demo1" class="tryit">
+						<p class="editable demo">Try it in this editable...</p>
+						<button class="big-bad-bold-button">Bold</button>
+						<script>
+							'use strict';
+							aloha($('#demo1 .editable')[0]);
+							$('#demo1 .big-bad-bold-button')
+								.on('click', aloha.ui.command(aloha.ui.commands.bold));
+						</script>
+					</div>
 
 					<p>
 						There are a number of other formatting commands that
@@ -300,8 +311,6 @@ for (var editable in editables) {
 
 		<div id="followTheFrog"><a href="#">#followTheFrog</a></div>
 
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-
 		<script src="js/aloha-web.js"></script>
 
 		<!-- script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -318,18 +327,19 @@ ga('send', 'pageview');</script -->
 			})(document);
 	    </script -->
 
-		<script src="js/aloha.min.js"></script>
 		<script>setTimeout(function () {
 			'use strict';
-			aloha.dom.query('.editable', document).map(aloha);
+			/*
+			aloha.dom.query('header .editable', document).map(aloha);
 			var boundary = aloha.boundaries.fromEndOfNode(
-				aloha.dom.query('.editable h1', document)[0]
+				aloha.dom.query('header .editable h1', document)[0]
 			);
 			aloha.editor.selection = aloha.selections.select(
 				aloha.editor.selection,
 				boundary,
 				boundary
 			);
+			*/
 		}, 500)</script>
 		<script src="codemirror-4.2/lib/codemirror.js"></script>
 		<script src="codemirror-4.2/mode/javascript/javascript.js"></script>
