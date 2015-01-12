@@ -13,7 +13,7 @@
 		<link href='codemirror-4.2/lib/codemirror.css' rel='stylesheet' type='text/css'>
 		<link href='followthefrog.css' rel='stylesheet' type='text/css'>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-		<script src="build/aloha.min.js"></script>
+		<script src="../build/aloha.min.js"></script>
 	</head>
 
 	<body>
@@ -32,7 +32,8 @@
 				<h3><a href="#include-and-invoke-aloha"><span>Leap 1:</span> Include &amp; Invoke Aloha</a></h3>
 				<h3><a href="#add-and-bind-a-button"><span>Leap 2:</span> Add &amp; Bind a Button</a></h3>
 				<h3><a href="#add-more-buttons"><span>Leap 3:</span> Add More Buttons</a></h3>
-				<h3><a href="#per-editable-binding"><span>Leap 4:</span> Per-editable Binding</a></h3>
+				<h3><a href="#bind-buttons-different-editables"><span>Leap 4:</span> Bind Buttons to Different Editables</a></h3>
+				<h3><a href="#display-formatting-state"><span>Leap 5:</span> Display Formatting State</a></h3>
 			</div></header>
 
 			<article>
@@ -258,9 +259,9 @@ for (var command in aloha.ui.commands) {
 
 			<article>
 
-				<header id="per-editable-binding"><div>
+				<header id="bind-buttons-different-editables"><div>
 					<div  class="bg"></div>
-					<h2><span>Leap 4:</span> Per-editable binding</h2>
+					<h2><span>Leap 4:</span> Bind Buttons to Different Editables</h2>
 				</div></header>
 
 				<section>
@@ -293,15 +294,15 @@ for (var command in aloha.ui.commands) {
 					</div>
 
 					<div class="snippet" data-snippet-link="config-code1,config-code2">
-var <&editables&> = aloha.dom.query('.editables', document).map(aloha);
-for (var editable in editables) {
+var <&editables&> = aloha.dom.query('.editable', document).map(aloha);
+editables.forEach(editable) {
 	for (var command in aloha.ui.commands) {
 		$('.action-' + command + '-' + <&editable.id&>).on(
 			'click',
 			<&aloha.ui.command&>(editable, aloha.ui.commands[command])
 		);
 	}
-}
+})
 					</div>
 
 					<p>
@@ -317,9 +318,46 @@ for (var editable in editables) {
 						just one editables.
 					</p>
 
+					<div id="demo3" class="tryit">
+						<p class="editable demo">Third editable on page--automatically assigned id "3"...</p>
+						<p class="editable demo">Fourth editable on page--automatically assigned id "4"..</p>
+						<button class="action-bold-3">B</button>
+						<button class="action-underline-4">U</button>
+						<script>
+							'use strict';
+							var editables = aloha.dom.query('#demo3 .editable', document).map(aloha);
+							editables.forEach(function (editable) {
+								for (var command in aloha.ui.commands) {
+									var $btn = $('#demo3 .action-' + command + '-' + editable.id);
+									if ($btn.length > 0) {
+										$btn.on('click', aloha.ui.command(editable, aloha.ui.commands[command]));
+									}
+								}
+							});
+						</script>
+					</div>
+
+
 				</section>
 
 			</article>
+
+			<article>
+
+				<header id="display-formatting-state"><div>
+					<div class="bg"></div>
+					<h2><span>Leap 5:</span> Display formatting state</h2>
+				</div></header>
+
+				<section>
+
+					<p>
+						...
+					</p>
+				</section>
+
+			</article>
+
 		</div>
 
 		<div id="something-amazing">Now build something amazing!</div>

@@ -169,23 +169,16 @@ define([
 		var check = 0 === editables.length
 		          ? Fn.returnTrue
 		          : Fn.partial(Arrays.contains, editables);
+		// TODO: I'm sorry. I'll fix this!
+		var editor = (editables[0] || window['aloha'])['editor'];
 		return function (event) {
-			// TODO: I'm sorry. I'll fix this!
-			var editor = (editables[0] || Dom.documentWindow(event.target.ownerDocument)['aloha'])['editor'];
 			var selection = editor.selection;
-			if (!selection || !selection.boundaries) {
-				return;
+			if (selection && selection.boundaries) {
+				var boundaries = Boundaries.get(Boundaries.document(selection.boundaries[0]));
+				if (boundaries && check(Editables.fromBoundary(editor, boundaries[0]))) {
+					fn(boundaries, editor, event);
+				}
 			}
-			var boundaries = Boundaries.get(
-				Boundaries.document(selection.boundaries[0])
-			);
-			if (!boundaries) {
-				return;
-			}
-			if (!check(Editables.fromBoundary(editor, boundaries[0]))) {
-				return;
-			}
-			fn(boundaries, editor, event);
 		};
 	}
 

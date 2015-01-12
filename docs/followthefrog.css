@@ -289,6 +289,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 .snippet-link { margin: 0 5px; }
 .snippet-link,
 .snippet-anchor {
+	white-space: nowrap;
 	position: relative;
 	font-family: monospace;
 	-webkit-transition: none;

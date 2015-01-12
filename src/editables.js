@@ -134,8 +134,9 @@ define([
 	 */
 	function is(obj) {
 		return obj
-		    && obj.hasOwnProperty
-		    && obj.hasOwnProperty('!aloha-expando-node-id');
+		    && obj['elem']
+		    && obj['elem'].hasOwnProperty
+		    && obj['elem'].hasOwnProperty('!aloha-expando-node-id');
 	}
 
 	return {
