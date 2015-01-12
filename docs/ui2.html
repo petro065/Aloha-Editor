@@ -233,7 +233,24 @@ for (var command in aloha.ui.commands) {
 
 					<p>... and done.</p>
 
-					// Try it!
+					<div id="demo2" class="tryit">
+						<p class="editable demo">Now, try it in this editable...</p>
+						<button class="action-bold">B</button>
+						<button class="action-italic">I</button>
+						<button class="action-underline">U</button>
+						<button class="action-unformat">✘</button>
+						<script>
+							'use strict';
+							aloha($('#demo2 .editable')[0]);
+							for (var command in aloha.ui.commands) {
+								$('#demo2 .action-' + command).on(
+									'click',
+									aloha.ui.command(aloha.ui.commands[command])
+								);
+							}
+						</script>
+					</div>
+
 
 				</section>
 
@@ -259,15 +276,15 @@ for (var command in aloha.ui.commands) {
 					</p>
 
 					<p>
-						First let add some suffixes to our button classnames. We
-						add
-						<a class="snippet-link" data-snippet-link="config-markup.1">1</a>
+						First let's add some suffixes to our button classnames.
+						We add
+						<a class="snippet-link" data-snippet-link="config-markup.1,config-code1.2">1</a>
 						to demark buttons that should effect
-						<a class="snippet-link" data-snippet-link="config-code.2">editable 1</a>
+						<a class="snippet-link" data-snippet-link="config-markup.1,config-code1.2">editable 1</a>
 						and
-						<a class="snippet-link" data-snippet-link="config-markup.2">2</a>
+						<a class="snippet-link" data-snippet-link="config-markup.2,config-code2.2">2</a>
 						to demark buttons that should effect editable
-						<a class="snippet-link" data-snippet-link="config-code.2">editable 2</a>.
+						<a class="snippet-link" data-snippet-link="config-markup.2,config-code2.2">editable 2</a>.
 					</p>
 
 					<div class="snippet" data-snippet-link="config-markup" data-syntax="text/html">
@@ -275,7 +292,7 @@ for (var command in aloha.ui.commands) {
 &lt;button class="action-underline-{&2&}"&gt;U&lt;/button&gt;
 					</div>
 
-					<div class="snippet" data-snippet-link="config-code">
+					<div class="snippet" data-snippet-link="config-code1,config-code2">
 var <&editables&> = aloha.dom.query('.editables', document).map(aloha);
 for (var editable in editables) {
 	for (var command in aloha.ui.commands) {
@@ -290,11 +307,11 @@ for (var editable in editables) {
 					<p>
 						Bare in mind that
 						<a href="#"
-							data-snippet-link="config-code.3"
+							data-snippet-link="config-code1.3"
 							class="snippet-link">aloha.ui.command</a>
 						can also take an array of
 						<a href="http://alohaeditor.org/api/editables.html"
-							data-snippet-link="config-code.1"
+							data-snippet-link="config-code1.1"
 							class="snippet-link">editables</a>
 						as its first argument to bind a single button to more than
 						just one editables.

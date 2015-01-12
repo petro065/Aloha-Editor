@@ -286,6 +286,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 }
 .cm-s-default pre>span { margin: 0 2.5em 0 1em; }
 
+.snippet-link { margin: 0 5px; }
 .snippet-link,
 .snippet-anchor {
 	position: relative;
@@ -296,7 +297,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	     -o-transition: none;
 	        transition: none;
 }
-.snippet-anchor { border-bottom: 2px dotted #edede8; }
+.snippet-anchor { border-bottom: 2px dotted #ddddd8; }
 .snippet-link:hover,
 .snippet-anchor:hover,
 .snippet-highlight {
@@ -306,6 +307,10 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	background: #555;
 	padding: 3px 6px;
 	margin: 0 -6px;
+}
+.snippet-link:hover,
+.snippet-link.snippet-highlight {
+	margin: 0 -1px;
 }
 
 .snippet {
@@ -364,7 +369,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 }
 .demo:hover {
 	border-color: #ddddd8;
-	background: #f3f3f0;
+	background: #eeeee5;
 }
 .tryit button {
 	color: #d05884;
@@ -373,7 +378,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	padding: .8em 1em;
 	border: 0;
 	border-radius: 0.2em;
-	min-width: 100px;
+	min-width: 50px;
 	font-weight: bold;
 	font-size: 18px;
 	cursor: pointer;
@@ -383,6 +388,4 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	    -moz-font-smoothing: antialiased;
 	         font-smoothing: antialiased;
 }
-.tryit button:hover {
-	background: #393835;
-}
+.tryit button:hover { background: #393835; }

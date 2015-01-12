@@ -1,12 +1,32 @@
 (function (aloha, $, CodeMirror) {
 	'use strict';
 
+	var VENDOR_PREFIX = (function () {
+		var elem = document.createElement('div');
+		var prefixes = ['', '-webkit-', '-moz-', '-ms-', '-o-'];
+		var style = elem.style;
+		for (var i = 0; i < prefixes.length; i++) {
+			if (style.hasOwnProperty(prefixes[i] + 'transform')) {
+				return prefixes[i];
+			}
+		}
+		return '';
+	}());
+
+	function createAnchor(domains, link) {
+		return domains.reduce(function (list, item) {
+			return list.concat(item + '.' + link);
+		}, []).join(',');
+	}
+
 	aloha.dom.query('.snippet', document).forEach(function (elem) {
-		var code = (elem.textContent || elem.innerText).trim().replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-		elem.innerHTML = '';
+		var code = (
+			elem.textContent || elem.innerText
+		).trim().replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+		var $elem = $(elem).html('');
 		CodeMirror(elem, {
 			value    : code,
-			mode     : aloha.dom.getAttr(elem, 'data-syntax') || 'javascript',
+			mode     : $elem.attr('data-syntax') || 'javascript',
 			readOnly : true
 		});
 		var html = elem.innerHTML;
@@ -19,12 +39,15 @@
 			+ '{&amp;(.*?)&amp;}',
 			'g'
 		);
-		html = html.replace(regex, function (match, code, html) {
-			return '<span class="snippet-anchor" data-snippet-link="'
-			     + (++snippetLinksCount)
-			     + '">' + (html || code) + '</span>';
-		});
-		elem.innerHTML = html;
+		var link = $elem.attr('data-snippet-link');
+		if (link) {
+			html = html.replace(regex, function (match, code, html) {
+				return '<span class="snippet-anchor" data-snippet-link="'
+				     + createAnchor(link.split(','), ++snippetLinksCount)
+				     + '">' + (html || code) + '</span>';
+			});
+		}
+		$(elem).html(html);
 	});
 
 	var $window = $(window);
@@ -47,42 +70,31 @@
 		});
 	}
 
-	var VENDOR_PREFIX = (function () {
-		var elem = document.createElement('div');
-		var prefixes = ['', '-webkit-', '-moz-', '-ms-', '-o-'];
-		var style = elem.style;
-		for (var i = 0; i < prefixes.length; i++) {
-			if (style.hasOwnProperty(prefixes[i] + 'transform')) {
-				return prefixes[i];
-			}
-		}
-		return '';
-	}());
-
 	function findLinks(domain, link) {
 		return $(
-			'[data-snippet-link="' + domain + '.' + link + '"],' +
-			'[data-snippet-link="' + domain + '"] span[data-snippet-link="' + link + '"]'
+			'[data-snippet-link*="' + domain + '.' + link + '"],' +
+			'.snippet[data-snippet-link*="' + domain + '"] span[data-snippet-link="' + link + '"]'
 		);
 	}
 
 	function findLinksFromElement($elem) {
-		return findLinks(
-			$elem.closest('.snippet').attr('data-snippet-link'),
-			$elem.attr('data-snippet-link')
-		);
+		return $($elem.attr('data-snippet-link').split(',').reduce(function (list, item) {
+			return list.concat('[data-snippet-link*="' + item +'"]');
+		}, []).join(','));
 	}
 
 	$(function () {
 		$('a.snippet-link').each(function (i, elem) {
 			var $elem = $(elem);
-			var linkage = $elem.attr('data-snippet-link').split('.');
-			var domain = linkage[0];
-			var link = linkage[1];
-			$elem.hover(function () {
-				findLinks(domain, link).addClass('snippet-highlight');
-			}, function () {
-				findLinks(domain, link).removeClass('snippet-highlight');
+			$elem.attr('data-snippet-link').split(',').forEach(function (linkage) {
+				linkage = linkage.split('.');
+				var domain = linkage[0];
+				var link = linkage[1];
+				$elem.hover(function () {
+					findLinks(domain, link).addClass('snippet-highlight');
+				}, function () {
+					findLinks(domain, link).removeClass('snippet-highlight');
+				});
 			});
 		});
 		$('span.snippet-anchor').hover(
