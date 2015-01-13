@@ -181,31 +181,6 @@
 			}());
 		</script>
 
-
-		<hr/>
-
-
-					<div id="demo3" class="tryit">
-						<p class="editable demo">Third editable on page--automatically assigned id "3"...</p>
-						<p class="editable demo">Fourth editable on page--automatically assigned id "4"..</p>
-						<button class="action-bold-3">B</button>
-						<button class="action-underline-4">U</button>
-						<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-						<script>
-							'use strict';
-							var editables = aloha.dom.query('#demo3 .editable', document).map(aloha);
-							editables.forEach(function (editable) {
-								for (var command in aloha.ui.commands) {
-									$('#demo3 .action-' + command + '-' + editable.id).on(
-										'click',
-										aloha.ui.command(editable, aloha.ui.commands[command])
-									);
-								}
-							});
-						</script>
-					</div>
-
-
 	</body>
 </html>
 

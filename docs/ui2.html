@@ -23,17 +23,14 @@
 				<div class="bg"></div>
 				<div class="editable">
 					<h1>Aloha Editor UI Guide</h1>
-					<h2>
-						<span>Keep calm and follow the frog</span>
-						<!-- img src="http://aloha-editor.org/Content.Node/img/froggy.png"
-							alt="#followTheFrog" title="#followTheFrog" / -->
-					</h2>
+					<h2><span>Keep calm and follow the frog</span></h2>
 				</div>
 				<h3><a href="#include-and-invoke-aloha"><span>Leap 1:</span> Include &amp; Invoke Aloha</a></h3>
 				<h3><a href="#add-and-bind-a-button"><span>Leap 2:</span> Add &amp; Bind a Button</a></h3>
 				<h3><a href="#add-more-buttons"><span>Leap 3:</span> Add More Buttons</a></h3>
-				<h3><a href="#bind-buttons-different-editables"><span>Leap 4:</span> Bind Buttons to Different Editables</a></h3>
-				<h3><a href="#display-formatting-state"><span>Leap 5:</span> Display Formatting State</a></h3>
+				<h3><a href="#multiple-editables"><span>Leap 4:</span> Multiple Editables</a></h3>
+				<h3><a href="#update-button-states"><span>Leap 5:</span> Update Button States</a></h3>
+				<h3><a href="#custom-commands"><span>Leap 6:</span> Custom Commands</a></h3>
 			</div></header>
 
 			<article>
@@ -114,7 +111,7 @@
 					</p>
 
 					<div class="snippet" data-syntax='text/html'>
-						&lt;button class="big-bad-bold-button"&gt;B&lt;/button&gt;
+						&lt;button id="big-bad-bold-button"&gt;B&lt;/button&gt;
 					</div>
 
 					<p>
@@ -130,7 +127,7 @@
 					</blockquote>
 
 					<div class="snippet" data-snippet-link="binding">
-$('.big-bad-bold-button')
+$('#big-bad-bold-button')
 	.on('click', <&aloha.ui.command&>(<&aloha.ui.commands.bold&>))
 					</div>
 
@@ -155,11 +152,11 @@ $('.big-bad-bold-button')
 
 					<div id="demo1" class="tryit">
 						<p class="editable demo">Try it in this editable...</p>
-						<button class="big-bad-bold-button">Bold</button>
+						<button id="big-bad-bold-button">Bold</button>
 						<script>
 							'use strict';
 							aloha($('#demo1 .editable')[0]);
-							$('#demo1 .big-bad-bold-button')
+							$('#big-bad-bold-button')
 								.on('click', aloha.ui.command(aloha.ui.commands.bold));
 						</script>
 					</div>
@@ -259,9 +256,9 @@ for (var command in aloha.ui.commands) {
 
 			<article>
 
-				<header id="bind-buttons-different-editables"><div>
+				<header id="multiple-editables"><div>
 					<div  class="bg"></div>
-					<h2><span>Leap 4:</span> Bind Buttons to Different Editables</h2>
+					<h2><span>Leap 4:</span> Multiple Editables</h2>
 				</div></header>
 
 				<section>
@@ -295,6 +292,7 @@ for (var command in aloha.ui.commands) {
 
 					<div class="snippet" data-snippet-link="config-code1,config-code2">
 var <&editables&> = aloha.dom.query('.editable', document).map(aloha);
+
 editables.forEach(editable) {
 	for (var command in aloha.ui.commands) {
 		$('.action-' + command + '-' + <&editable.id&>).on(
@@ -337,6 +335,64 @@ editables.forEach(editable) {
 						</script>
 					</div>
 
+				</section>
+
+			</article>
+
+			<article>
+
+				<header id="update-button-states"><div>
+					<div class="bg"></div>
+					<h2><span>Leap 5:</span> Update Button States</h2>
+				</div></header>
+
+				<section>
+					<p>
+						...
+					</p>
+
+					<div class="snippet" data-snippet-link="x">
+function <&middleware&>(event) {
+	$('.active').removeClass('active');
+	if ('leave' !== event.type) {
+		var states = <&aloha.ui.states&>(<&aloha.ui.commands&>, event);
+		for (var selector in states) {
+			$('#.action-' + selector)
+				.toggleClass('active', states[selector]);
+		}
+	}
+	return event;
+}
+
+<&aloha.editor.stack&>.unshift(<&middleware&>);
+					</div>
+
+					<div id="demo4" class="tryit">
+						<p class="editable demo"><i>Lots</i> <b>for <u>formatting</u></b> here—click around!</p>
+						<button class="action-bold">B</button>
+						<button class="action-italic">I</button>
+						<button class="action-underline">U</button>
+						<button class="action-unformat">✘</button>
+						<script>
+							'use strict';
+							aloha($('#demo4 .editable')[0]);
+							for (var command in aloha.ui.commands) {
+								$('#demo4 .action-' + command)
+									.on('click', aloha.ui.command(aloha.ui.commands[command]));
+							}
+							aloha.editor.stack.unshift(function (event) {
+								$('#demo4 .active').removeClass('active');
+								if ('leave' !== event.type) {
+									var states = aloha.ui.states(aloha.ui.commands, event);
+									for (var selector in states) {
+										$('#demo4 .action-' + selector)
+											.toggleClass('active', states[selector]);
+									}
+								}
+								return event;
+							});
+						</script>
+					</div>
 
 				</section>
 
@@ -344,16 +400,52 @@ editables.forEach(editable) {
 
 			<article>
 
-				<header id="display-formatting-state"><div>
+				<header id="custom-commands"><div>
 					<div class="bg"></div>
-					<h2><span>Leap 5:</span> Display formatting state</h2>
+					<h2><span>Leap 6:</span> Custom Commands</h2>
 				</div></header>
 
 				<section>
-
 					<p>
-						...
+						You are not restricted to the default commands found in
+						<a href="#"><code>aloha.ui.commands</code></a>. You can
+						also use your own custom commands.
 					</p>
+
+					<div class="snippet" data-snippet-link="custom-command">
+var <&command&> = {
+	crazyCoolProperty: 'Current boundary selection: ',
+	<&action&>: function (<&boundaries&>, selection, <&command&>) {
+		console.log(command.crazyCoolProperty + aloha.markers.hint(<&boundaries&>));
+	}
+};
+$('#crazy-cool-custom-command')
+	.on('click', aloha.ui.command(<&command&>));
+					</div>
+
+					<div id="demo5" class="tryit">
+						<p class="editable demo"><u>Select</u> some text here, and <i>click</i> that <b>button</b> below.</p>
+						<p><pre class="console"></pre></p>
+						<button id="crazy-cool-custom-command">★ Crazy Cool Custom Command ★</button>
+						<script>
+							var command = {
+								crazyCoolProperty: 'You selected:',
+								action: function (boundaries, selection, command) {
+									var source = aloha.markers.hint(boundaries, true)
+									           .replace(/[\n\r]/g, '')
+									           .replace(/^.*?▓([^▓]+)▓.*$/, '$1')
+											   .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+											   .replace(/^[\{\[]|[\}\]]$/g, '');
+								   $('#demo5 .console')
+									   .html('<b>' + command.crazyCoolProperty + '</b> "' + source + '"');
+								}
+							};
+							$('#crazy-cool-custom-command').on(
+								'click',
+								aloha.ui.command(aloha($('#demo5 .editable')[0]), command)
+							);
+						</script>
+					</div>
 				</section>
 
 			</article>
@@ -384,7 +476,6 @@ ga('send', 'pageview');</script -->
 
 		<script>setTimeout(function () {
 			'use strict';
-			/*
 			aloha.dom.query('header .editable', document).map(aloha);
 			var boundary = aloha.boundaries.fromEndOfNode(
 				aloha.dom.query('header .editable h1', document)[0]
@@ -394,7 +485,6 @@ ga('send', 'pageview');</script -->
 				boundary,
 				boundary
 			);
-			*/
 		}, 500)</script>
 		<script src="codemirror-4.2/lib/codemirror.js"></script>
 		<script src="codemirror-4.2/mode/javascript/javascript.js"></script>

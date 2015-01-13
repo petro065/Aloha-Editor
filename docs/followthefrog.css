@@ -298,6 +298,7 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	     -o-transition: none;
 	        transition: none;
 }
+.snippet-link,
 .snippet-anchor { border-bottom: 2px dotted #ddddd8; }
 .snippet-link:hover,
 .snippet-anchor:hover,
@@ -370,14 +371,14 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 }
 .demo:hover {
 	border-color: #ddddd8;
-	background: #eeeee5;
+	background: #efefe9;
 }
 .tryit button {
 	color: #d05884;
 	background: #f03864;
 	color: #fff;
-	padding: .8em 1em;
-	border: 0;
+	padding: .5em .8em;
+	border: 4px solid #f03864;
 	border-radius: 0.2em;
 	min-width: 50px;
 	font-weight: bold;
@@ -389,4 +390,14 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	    -moz-font-smoothing: antialiased;
 	         font-smoothing: antialiased;
 }
-.tryit button:hover { background: #393835; }
+.tryit button:hover,
+.tryit button.active:hover {
+	background: #393835;
+	border-color: #393835;
+}
+.tryit button.active {
+	background: #b00854;
+	text-decoration: underline;
+}
+
+.CodeMirror-hscrollbar { visibility: hidden; }
