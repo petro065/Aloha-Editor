@@ -11,7 +11,7 @@
 		<link rel="icon" type="image/png" href="favicon.png">
 		<link href='http://fonts.googleapis.com/css?family=Droid+Serif:400|Roboto:300,400,700' rel='stylesheet' type='text/css'>
 		<link href='codemirror-4.2/lib/codemirror.css' rel='stylesheet' type='text/css'>
-		<link href='css/aloha-docs.css' rel='stylesheet' type='text/css'>
+		<link href='css/docs.css' rel='stylesheet' type='text/css'>
 		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
 		<script src="../build/aloha.min.js"></script>
 	</head>
@@ -62,7 +62,7 @@
 					</p>
 
 					<p>
-						You can deactivate editing by invoking
+						Deactivate editing by invoking
 						<a href="http://alohaeditor.org/api/aloha.html#mahalo"><code>aloha.mahalo()</code></a>
 						on the same element that was given to
 						<a href="http://alohaeditor.org/api/aloha.html#aloha"
@@ -78,13 +78,16 @@
 					<div class="snippet" data-snippet-link="aloha">aloha.dom.query('.editable', document).forEach(<&aloha&>)</div>
 
 					<p>
-						Once you've initialized your editable
+						Once an editable is initialized
 						<span id="caret-tease" class="editable"> you will
 						see that Aloha Editor uses a blinking DIV element as the
 						caret</span>.  This caret is the minimal visual user interface
 						(<!-- a href="#caretStylingFiddle" -->which you can style and
 						animate with CSS, by the way).
-						But sooner or later, you'll need more for UI than just a
+					</p>
+
+					<p>
+						Sooner or later you'll need more for UI than just a
 						caret, so the next section shows you how to add a simple
 						bold button to your UI.
 					</p>
@@ -106,7 +109,7 @@
 						an editable to bold.
 					</p>
 					<p>
-						Begin by putting the following markup somewhere into the
+						Begin by putting the following markup somewhere in the
 						body your document:
 					</p>
 
@@ -132,7 +135,7 @@ $('#big-bad-bold-button')
 					</div>
 
 					<p>
-						The two notable components of code above are
+						The two notable components of the code above are
 						<a href="#" data-snippet-link="binding.1"
 							class="snippet-link">aloha.ui.command()</a> and
 						<a href="#" data-snippet-link="binding.2"
@@ -142,8 +145,8 @@ $('#big-bad-bold-button')
 					<p>
 						<a href="#" data-snippet-link="binding.1" class="snippet-link">aloha.ui.command</a> is a
 						function that generates an event handler, and uses a map
-						of properties--defined through
-						<a href="#" data-snippet-link="binding.2" class="snippet-link">aloha.ui.commands.bold</a>--to
+						of properties—defined through
+						<a href="#" data-snippet-link="binding.2" class="snippet-link">aloha.ui.commands.bold</a>—to
 						determine what that event handler should do when the
 						button is clicked. In this case, any content that is
 						selected inside of an editable when this  button is
@@ -163,13 +166,11 @@ $('#big-bad-bold-button')
 
 					<p>
 						There are a number of other formatting commands that
-						come with Aloha Editor out of the box. You've just seen
-						the
+						come as defaults with Aloha Editor. You've just seen the
 						<a href="#"><code>aloha.ui.commands.bold</code></a>
 						command in action, but there are
 						<a href="http://alohaeditor.org/api/ui.html#commands">a few more</a>.
-						The next section explains how to bind many buttons in
-						simple way.
+						The next section explains a convenient way to bind multiple buttons.
 					</p>
 
 				</section>
@@ -208,7 +209,8 @@ $('#big-bad-bold-button')
 					</div>
 
 					<p>
-						Now let's bind 4 of these commands to buttons at once. First the HTML...
+						Now let's bind
+						<a >4 of these commands</a> to buttons at once. First the HTML...
 					</p>
 
 					<div class="snippet" data-syntax='text/html'>
