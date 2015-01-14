@@ -44,7 +44,7 @@
 			html = html.replace(regex, function (match, code, html) {
 				return '<span data-snippet-anchor="'
 				     + createAnchor(link.split(','), ++snippetLinksCount)
-				     + '">' + (html || code) + '</span>';
+				     + '" title="' + snippetLinksCount + '">' + (html || code) + '</span>';
 			});
 		}
 		$(elem).html(html);

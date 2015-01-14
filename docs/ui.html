@@ -354,25 +354,24 @@ editables.forEach(editable) {
 					</p>
 
 					<p>
-						You can achieve this through adding a function (called "middleware")
-						in the end of aloha.editor.stack array of functions.
+						You can achieve this by adding a
+						<a data-snippet-link="middleware.1,middleware.7">function (called "middleware")</a>
+						at the end of
+						<a data-snippet-link="middleware.6">aloha.editor.stack</a> array of functions.
 					</p>
 
 					<p>
-						All such middleware functions receive an event object
+						All such middleware functions receive an
+						<a data-snippet-link="middleware.2,middleware.5">event object</a>
 						that is threaded through aloha.editor.stack everytime
 						there is an editing interaction.
 					</p>
 
-					<p>
-						...
-					</p>
-
-					<div class="snippet" data-snippet="x">
-function <&middleware&>(event) {
+					<div class="snippet" data-snippet="middleware">
+function <&middleware&>(<&event&>) {
 	$('.active').removeClass('active');
 	if ('leave' !== event.type) {
-		var states = <&aloha.ui.states&>(<&aloha.ui.commands&>, event);
+		var states = <&aloha.ui.states&>(<&aloha.ui.commands&>, <&event&>);
 		for (var selector in states) {
 			$('#.action-' + selector)
 				.toggleClass('active', states[selector]);
