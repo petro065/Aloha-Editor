@@ -91,7 +91,6 @@
 				var domain = linkage[0];
 				var link = linkage[1];
 				$elem.hover(function () {
-					console.log(domain, link);
 					findLinks(domain, link).addClass('snippet-highlight');
 				}, function () {
 					findLinks(domain, link).removeClass('snippet-highlight');

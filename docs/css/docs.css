@@ -110,7 +110,7 @@ h1 {
 	font-size: 4em;
 	font-weight: 700;
 	letter-spacing: -0.04em;
-	margin: 90px auto 0px;
+	margin: 90px auto 10px;
 }
 h2 {
 	max-width: 800px;
@@ -191,13 +191,12 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	display: block;
 	padding: 2em 0;
 	text-align: center;
-}
-#followTheFrog a {
 	font-weight: 700;
 	font-size: 0.8em;
 	border: 0;
 	color: #c9c8c5;
-} #followTheFrog a:hover { color: #797875; }
+}
+#followTheFrog:hover { color: #999895; }
 #caret-tease { border-bottom: 3px dotted #edede8; }
 .aloha-caret::before {
 	content: '';
