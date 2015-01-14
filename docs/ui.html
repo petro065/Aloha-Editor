@@ -52,11 +52,11 @@
 					<div class="snippet" data-syntax='text/html'>
 						&lt;script src="http://aloha-editor.org/download/aloha.min.js"&gt;&lt;/script&gt;
 					</div>
-					<div class="snippet" data-snippet-link="aloha"><&aloha&>(document.querySelector('#editable'))</div>
+					<div class="snippet" data-snippet="aloha"><&aloha&>(document.querySelector('#editable'))</div>
 
 					<p>
 						<a href="http://alohaeditor.org/api/aloha.html#aloha"
-							data-snippet-link="aloha.1" class="snippet-link">aloha()</a>
+							data-snippet-link="aloha.1">aloha()</a>
 						transforms the element given to it into a rich-text
 						editing canvas.
 					</p>
@@ -66,8 +66,7 @@
 						<a href="http://alohaeditor.org/api/aloha.html#mahalo"><code>aloha.mahalo()</code></a>
 						on the same element that was given to
 						<a href="http://alohaeditor.org/api/aloha.html#aloha"
-							data-snippet-link="aloha.1"
-							class="snippet-link">aloha()</a>.
+							data-snippet-link="aloha.1">aloha()</a>.
 					</p>
 
 					<p>
@@ -75,7 +74,7 @@
 						line of code:
 					</p>
 
-					<div class="snippet" data-snippet-link="aloha">aloha.dom.query('.editable', document).forEach(<&aloha&>)</div>
+					<div class="snippet" data-snippet="aloha">aloha.dom.query('.editable', document).forEach(<&aloha&>)</div>
 
 					<p>
 						Once an editable is initialized
@@ -129,24 +128,22 @@
 						<a href="http://vanilla-js.com">pick your own poison</a>.
 					</blockquote>
 
-					<div class="snippet" data-snippet-link="binding">
+					<div class="snippet" data-snippet="binding">
 $('#big-bad-bold-button')
 	.on('click', <&aloha.ui.command&>(<&aloha.ui.commands.bold&>))
 					</div>
 
 					<p>
 						The two notable components of the code above are
-						<a href="#" data-snippet-link="binding.1"
-							class="snippet-link">aloha.ui.command()</a> and
-						<a href="#" data-snippet-link="binding.2"
-							class="snippet-link">aloha.ui.commands.bold</a>.
+						<a href="#" data-snippet-link="binding.1">aloha.ui.command()</a> and
+						<a href="#" data-snippet-link="binding.2">aloha.ui.commands.bold</a>.
 					</p>
 
 					<p>
-						<a href="#" data-snippet-link="binding.1" class="snippet-link">aloha.ui.command</a> is a
-						function that generates an event handler, and uses a map
-						of properties—defined through
-						<a href="#" data-snippet-link="binding.2" class="snippet-link">aloha.ui.commands.bold</a>—to
+						<a href="#" data-snippet-link="binding.1">aloha.ui.command</a>
+						is a function that generates an event handler, and uses
+						a map of properties—defined through
+						<a href="#" data-snippet-link="binding.2">aloha.ui.commands.bold</a>—to
 						determine what that event handler should do when the
 						button is clicked. In this case, any content that is
 						selected inside of an editable when this  button is
@@ -210,23 +207,26 @@ $('#big-bad-bold-button')
 
 					<p>
 						Now let's bind
-						<a >4 of these commands</a> to buttons at once. First the HTML...
+						<a data-snippet-link="default-commands.1,default-commands.2,default-commands.3,default-commands.4">4 of these commands</a>
+						to buttons at once. First the HTML...
 					</p>
 
-					<div class="snippet" data-syntax='text/html'>
-&lt;button class="action-bold"&gt;B&lt;/button&gt;
-&lt;button class="action-italic"&gt;I&lt;/button&gt;
-&lt;button class="action-underline"&gt;U&lt;/button&gt;
-&lt;button class="action-unformat"&gt;✘&lt;/button&gt;
+					<div class="snippet"
+						data-syntax='text/html'
+						data-snippet="default-commands">
+&lt;button class="action-{&bold&}"&gt;B&lt;/button&gt;
+&lt;button class="action-{&italic&}"&gt;I&lt;/button&gt;
+&lt;button class="action-{&underline&}"&gt;U&lt;/button&gt;
+&lt;button class="action-{&unformat&}"&gt;✘&lt;/button&gt;
 					</div>
 
 					<p>... then some JavaScript...</p>
 
-					<div class="snippet">
-for (var command in aloha.ui.commands) {
-	$('.action-' + command).on(
+					<div class="snippet" data-snippet="default-commands">
+for (var <&command&> in aloha.ui.commands) {
+	$('.action-' + <&command&>).on(
 		'click',
-		aloha.ui.command(aloha.ui.commands[command])
+		aloha.ui.command(aloha.ui.commands[<&command&>])
 	);
 }
 					</div>
@@ -278,21 +278,21 @@ for (var command in aloha.ui.commands) {
 					<p>
 						First let's add some suffixes to our button classnames.
 						We add
-						<a class="snippet-link" data-snippet-link="config-markup.1,config-code1.2">1</a>
+						<a data-snippet-link="config-markup.1,config-code1.2">1</a>
 						to demark buttons that should effect
-						<a class="snippet-link" data-snippet-link="config-markup.1,config-code1.2">editable 1</a>
+						<a data-snippet-link="config-markup.1,config-code1.2">editable 1</a>
 						and
-						<a class="snippet-link" data-snippet-link="config-markup.2,config-code2.2">2</a>
+						<a data-snippet-link="config-markup.2,config-code2.2">2</a>
 						to demark buttons that should effect editable
-						<a class="snippet-link" data-snippet-link="config-markup.2,config-code2.2">editable 2</a>.
+						<a data-snippet-link="config-markup.2,config-code2.2">editable 2</a>.
 					</p>
 
-					<div class="snippet" data-snippet-link="config-markup" data-syntax="text/html">
+					<div class="snippet" data-snippet="config-markup" data-syntax="text/html">
 &lt;button class="action-bold-{&1&}"&gt;B&lt;/button&gt;
 &lt;button class="action-underline-{&2&}"&gt;U&lt;/button&gt;
 					</div>
 
-					<div class="snippet" data-snippet-link="config-code1,config-code2">
+					<div class="snippet" data-snippet="config-code1,config-code2">
 var <&editables&> = aloha.dom.query('.editable', document).map(aloha);
 
 editables.forEach(editable) {
@@ -308,12 +308,10 @@ editables.forEach(editable) {
 					<p>
 						Bare in mind that
 						<a href="#"
-							data-snippet-link="config-code1.3"
-							class="snippet-link">aloha.ui.command</a>
+							data-snippet-link="config-code1.3">aloha.ui.command</a>
 						can also take an array of
 						<a href="http://alohaeditor.org/api/editables.html"
-							data-snippet-link="config-code1.1"
-							class="snippet-link">editables</a>
+							data-snippet-link="config-code1.1">editables</a>
 						as its first argument to bind a single button to more than
 						just one editables.
 					</p>
@@ -370,7 +368,7 @@ editables.forEach(editable) {
 						...
 					</p>
 
-					<div class="snippet" data-snippet-link="x">
+					<div class="snippet" data-snippet="x">
 function <&middleware&>(event) {
 	$('.active').removeClass('active');
 	if ('leave' !== event.type) {
@@ -433,26 +431,24 @@ function <&middleware&>(event) {
 
 					<p>
 						You do this by specifying your own
-						<a class="snippet-link"
-							data-snippet-link="custom-command.1,custom-command.6,custom-command.9">command object</a>
+						<a data-snippet-link="custom-command.1,custom-command.6,custom-command.9">command object</a>
 						that contains an
-						<a class="snippet-link" data-snippet-link="custom-command.3">action</a>
+						<a data-snippet-link="custom-command.3">action</a>
 						function, and any other
-						<a class="snippet-link"
-						data-snippet-link="custom-command.2,custom-command.7">properties</a>
+						<a data-snippet-link="custom-command.2,custom-command.7">properties</a>
 						you want. When the event to which this
-						<a class="snippet-link" data-snippet-link="custom-command.9">command is bound</a>
+						<a data-snippet-link="custom-command.9">command is bound</a>
 						is fired, this command's action function will be called,
 						and will receive an
-						<a class="snippet-link" data-snippet-link="custom-command.4,custom-command.8">array of boundaries</a>
+						<a data-snippet-link="custom-command.4,custom-command.8">array of boundaries</a>
 						that represent the current boundary selection, the
-						<a class="snippet-link" data-snippet-link="custom-command.5">selection context object</a>,
+						<a data-snippet-link="custom-command.5">selection context object</a>,
 						and the
-						<a class="snippet-link" data-snippet-link="custom-command.6">the command</a>
+						<a data-snippet-link="custom-command.6">the command</a>
 						itself.
 					</p>
 
-					<div class="snippet" data-snippet-link="custom-command">
+					<div class="snippet" data-snippet="custom-command">
 var <&command&> = {
 	<&crazyCoolProperty&>: 'Current boundary selection: ',
 	<&action&>: function (<&boundaries&>, <&selection&>, <&command&>) {

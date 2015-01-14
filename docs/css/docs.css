@@ -239,6 +239,14 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 
 /** `codemirror theme **/
 
+.CodeMirror {
+	padding: 1em 0;
+	height: auto;
+	background: transparent;
+}
+.CodeMirror-lines { padding: 0.5em 0; }
+.CodeMirror-hscrollbar { visibility: hidden; }
+
 .cm-s-default                  { color: #ccc }
 .cm-s-default .cm-operator     { color: #cba }
 .cm-s-default .cm-number       { color: #d9a }
@@ -286,9 +294,10 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 }
 .cm-s-default pre>span { margin: 0 2.5em 0 1em; }
 
-.snippet-link { margin: 0 5px; }
-.snippet-link,
-.snippet-anchor {
+[data-snippet-link] { margin: 0 5px; }
+
+[data-snippet-link],
+[data-snippet-anchor] {
 	white-space: nowrap;
 	position: relative;
 	font-family: monospace;
@@ -298,10 +307,12 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	     -o-transition: none;
 	        transition: none;
 }
-.snippet-link,
-.snippet-anchor { border-bottom: 2px dotted #ddddd8; }
-.snippet-link:hover,
-.snippet-anchor:hover,
+
+[data-snippet-link],
+[data-snippet-anchor] { border-bottom: 2px dotted #ddddd8; }
+
+[data-snippet-link]:hover,
+[data-snippet-anchor]:hover,
 .snippet-highlight {
 	border-radius: 1em;
 	color: #fff;
@@ -310,10 +321,9 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	padding: 3px 6px;
 	margin: 0 -6px;
 }
-.snippet-link:hover,
-.snippet-link.snippet-highlight {
-	margin: 0 -1px;
-}
+
+[data-snippet-link]:hover,
+[data-snippet-link].snippet-highlight { margin: 0 -1px; }
 
 .snippet {
 	position: relative;
@@ -355,12 +365,6 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 		rgba(249, 249, 245, 1) 1em
 	);
 }
-.CodeMirror {
-	padding: 1em 0;
-	height: auto;
-	background: transparent;
-}
-.CodeMirror-lines { padding: 0.5em 0; }
 
 .demo {
 	padding: 1em;
@@ -400,5 +404,3 @@ h3 a:hover { border-color: rgba(255,255,255,0.2); }
 	background: #b00854;
 	text-decoration: underline;
 }
-
-.CodeMirror-hscrollbar { visibility: hidden; }

@@ -39,10 +39,10 @@
 			+ '{&amp;(.*?)&amp;}',
 			'g'
 		);
-		var link = $elem.attr('data-snippet-link');
+		var link = $elem.attr('data-snippet');
 		if (link) {
 			html = html.replace(regex, function (match, code, html) {
-				return '<span class="snippet-anchor" data-snippet-link="'
+				return '<span data-snippet-anchor="'
 				     + createAnchor(link.split(','), ++snippetLinksCount)
 				     + '">' + (html || code) + '</span>';
 			});
@@ -73,38 +73,41 @@
 	function findLinks(domain, link) {
 		return $(
 			'[data-snippet-link*="' + domain + '.' + link + '"],' +
-			'.snippet[data-snippet-link*="' + domain + '"] span[data-snippet-link="' + link + '"]'
+			'[data-snippet*="' + domain + '"] [data-snippet-anchor*="' + domain + '.' + link + '"]'
 		);
 	}
 
-	function findLinksFromElement($elem) {
-		return $($elem.attr('data-snippet-link').split(',').reduce(function (list, item) {
-			return list.concat('[data-snippet-link*="' + item +'"]');
+	function findLinksFromAnchor($elem) {
+		return $($elem.attr('data-snippet-anchor').split(',').reduce(function (list, item) {
+			return list.concat('[data-snippet-link*="' + item + '"]');
 		}, []).join(','));
 	}
 
 	$(function () {
-		$('a.snippet-link').each(function (i, elem) {
+		$('[data-snippet-link]').each(function (i, elem) {
 			var $elem = $(elem);
 			$elem.attr('data-snippet-link').split(',').forEach(function (linkage) {
 				linkage = linkage.split('.');
 				var domain = linkage[0];
 				var link = linkage[1];
 				$elem.hover(function () {
+					console.log(domain, link);
 					findLinks(domain, link).addClass('snippet-highlight');
 				}, function () {
 					findLinks(domain, link).removeClass('snippet-highlight');
 				});
 			});
 		});
-		$('span.snippet-anchor').hover(
+		$('[data-snippet-anchor]').hover(
 			function (event) {
-				findLinksFromElement($(event.target)
-					.closest('.snippet-anchor')).addClass('snippet-highlight');
+				findLinksFromAnchor($(event.target)
+					.closest('[data-snippet-anchor]'))
+						.addClass('snippet-highlight');
 			},
 			function (event) {
-				findLinksFromElement($(event.target)
-					.closest('.snippet-anchor')).removeClass('snippet-highlight');
+				findLinksFromAnchor($(event.target)
+					.closest('[data-snippet-anchor]'))
+						.removeClass('snippet-highlight');
 			}
 		);
 		if (0 === $('header .bg').length) {
