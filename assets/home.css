@@ -1,0 +1,131 @@
+.rainbow .bg { height: 100%; }
+
+.title { height: auto; }
+
+.title::after {
+    background-image: url(noise.png);
+    content: '';
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0.03;
+}
+
+body { color: #797875; }
+
+nav {
+	height: 10vh;
+	padding: 10px 30px;
+}
+@media (max-width: 480px) { nav { padding: 0 10px; } }
+
+.section-heading { padding: 5em 0; }
+
+h2 {
+	color: #393835;
+	text-align: center;
+	font-weight: 700;
+	font-size: 2.5em;
+	margin-bottom: 0.3em;
+}
+h3 {
+	color: #cdcdc8;
+	font-family: Georgia;
+	text-align: center;
+	font-weight: 300;
+	font-size: 1.8em;
+	font-style: italic;
+}
+
+#masthead {
+	position: relative;
+	max-width: 900px;
+	min-height: 90vh;
+	margin: 0 auto;
+	padding: 1em 30px 50px;
+	text-align: center;
+}
+#masthead h1 { font-size: 3em; }
+#masthead p {
+	opacity: 0.7;
+	width: 80%;
+	margin-left: auto;
+	margin-right: auto;
+	font-size: 1.5em;
+	line-height: 1.2em;
+}
+#masthead p:last-child { margin-bottom: 0; }
+#masthead a {
+	border: 2px solid rgba(255,255,255,0.2);
+	border-radius: 5px;
+	background: transparent;
+	color: #fff;
+	padding: 1em;
+	font-size: 1em;
+	font-weight: bold;
+	cursor: pointer;
+}
+#masthead a { margin-left: 1em; }
+#masthead a:first-child { margin-left: 0; }
+#masthead a:hover { border-color: rgba(255,255,255,0.4); }
+
+@media (max-width: 640px) { #masthead { padding: 140px 50px 30px; } }
+
+#action { margin: 60px 0 90px; }
+@media (max-width: 640px) {
+	#action a {
+		display: block;
+		width: 100%;
+		max-width: 70vw;
+		margin: 0 auto;
+	}
+	#action a:first-child {
+		margin-left: auto;
+		border-bottom-left-radius: 0px;
+		border-bottom-right-radius: 0px;
+	}
+	#action a:last-child {
+		border-top: 0;
+		border-top-left-radius: 0px;
+		border-top-right-radius: 0px;
+	}
+}
+
+#more {
+	position: absolute;
+	text-align: center;
+	left: 0;
+	bottom: 30px;
+	width: 100%;
+}
+#more a {
+	display: inline-block;
+	font-size: 1.4em;
+	line-height: 3.6rem;
+	text-align: center;
+	width: 4rem;
+	height: 4rem;
+	border-radius: 4rem;
+	border: 2px solid rgba(255,255,255,0.2);
+	color: #fff;
+	padding: 0;
+}
+#more a:hover {
+	border: 2px solid rgba(255,255,255,0.4);
+}
+
+section {
+	max-width: 800px;
+	margin: 0 auto;
+	padding: 30px;
+	background: #fff;
+	-moz-osx-font-smoothing: initial;
+	 -webkit-font-smoothing: initial;
+	    -moz-font-smoothing: initial;
+}
+section>:first-child { margin-top: 0; }
+section>:last-child { margin-bottom: 0; }
