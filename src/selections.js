@@ -1173,9 +1173,9 @@ define([
 		);
 		selection.focus = change.focus;
 		selection.boundaries = change.boundaries;
+		// FIX ME: This check should not be necessary
 		/*
-		// This check should not be necessary
-		if (selection.boundaries[0]) {
+		if (selection.boundaries[0] && aloha['highlights']) {
 			highlight(selection.boundaries[0], selection.boundaries[1]).forEach(function (box) {
 				Dom.setStyle(box, 'background', '#fce05e'); // or blue #a6c7f7
 			});
@@ -1280,6 +1280,11 @@ define([
 			selection.caret.style,
 			stylesFromOverrides(mapOverrides(node, selection))
 		);
+		var fontNode = Dom.getComputedStyle(
+			Dom.isTextNode(node) ? node.parentNode : node,
+			'font-size'
+		);
+		Dom.setStyle(selection.caret, 'font-size', fontNode);
 		Boundaries.select(start, end);
 		selection.blinking.start();
 		return Maps.merge(selection, { 

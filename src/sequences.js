@@ -134,16 +134,18 @@ define([
 		}, []);
 	}
 
-	function tagLists(listOfLists) {
-		if (listOfLists[0] && listOfLists[0].tag) {
-			return listOfLists;
+	function markList(list) {
+		if (list.marker) {
+			return list;
 		}
 		var id = new Date().getTime();
-		return listOfLists.reduce(function (lists, list) {
-			var newList = list.concat();
-			newList.tag = ++id;
-			return lists.concat([newList]);
-		}, []);
+		var marked = list.map(function (item) {
+			var obj = item.concat();
+			obj.marker = ++id;
+			return obj;
+		});
+		marked.marker = ++id;
+		return marked;
 	}
 
 	/**
@@ -432,6 +434,7 @@ define([
 	 * sequence's `spaces` property.
 	 *
 	 * @private
+	 * @see    `returnWhitespaces
 	 * @param  {!Sequence} sequence
 	 * @return {Sequence}
 	 */
@@ -506,6 +509,7 @@ define([
 	 * normalizeWhitespaces) back in the sequence.
 	 *
 	 * @private
+	 * @see    `normalizeWhitespaces
 	 * @param  {!Sequence} sequence
 	 * @return {Sequence}
 	 */
@@ -619,21 +623,6 @@ define([
 	}
 
 	/**
-	 * Returns all spans that fall within the given bounds.
-	 *
-	 * @private
-	 * @param  {!Array.<Span>} spans
-	 * @param  {!Span}         bounds
-	 * @return {Array.<Span>}
-	 */
-	function nestedSpans(spans, bounds) {
-		return spans.filter(function (span) {
-			return bounds !== span
-			    && bounds[0] <= span[0] && span[1] <= bounds[1];
-		});
-	}
-
-	/**
 	 * Returns 1 if span a succeeds span b; -1 if it preceeds; or else 0;
 	 *
 	 * @private
@@ -649,20 +638,78 @@ define([
 		     : -1;
 	}
 
-	function startBoundaryBetween(boundaries, start, end) {
-		return boundaries.filter(function (boundary) {
-			return boundary[0] >= start && boundary[0] <= end;
+	function isBetween(range, boundary) {
+		return range[0] <= boundary[0] && boundary[1] <= range[1];
+	}
+
+	/**
+	 * Returns all spans that fall within the given bounds.
+	 *
+	 * @private
+	 * @param  {!Span}         range
+	 * @param  {!Array.<Span>} spans
+	 * @return {Array.<Span>}
+	 */
+	function getChildren(range, spans) {
+		return spans.filter(function (span) {
+			return range !== span && isBetween(range, span);
+		}).map(function (span) {
+			var copy = [span[0] - range[0], span[1] - range[0]].concat(span.slice(2));
+			if (span.marker) {
+				copy.marker = span.marker;
+			}
+			return copy;
 		});
 	}
 
-	function siblingSpans(spans, offset) {
-		return spans.reduce(function (list, span) {
-			if (span[0] >= offset) {
-				list = list.concat([span]);
-				offset = span[1];
+	function getSiblings(spans) {
+		var offset = 0;
+		return spans.sort(compareSpans).filter(function (span) {
+			var bool = span[0] >= offset;
+			offset = Math.max(offset, span[1]);
+			return bool;
+		});
+	}
+
+	function unencapsulated(boundaries, spans) {
+		return boundaries.filter(function (boundary) {
+			return !spans.some(function (span) {
+				return isBetween(span, [boundary[0], boundary[0]]);
+			});
+		});
+	}
+
+	function getPaths(range, boundaries, trail) {
+		var end = range[1] - range[0];
+		return boundaries.map(function (boundary) {
+			var path = trail.concat();
+			if (0 === boundary[0]) {
+				path.slice(-1, 1, Arrays.last(path));
+			} else if (end === boundary[0]) {
+				path.slice(-1, 1, Arrays.last(path));
+			} else {
+				path.push(boundary[0]);
 			}
-			return list;
-		}, []);
+			path.marker = boundary.marker;
+			return path;
+		});
+	}
+
+	function segments(spans, content) {
+		var all = [];
+		var offset = 0;
+		var last = Arrays.last(spans);
+		spans.forEach(function (span) {
+			if (span[0] > offset) {
+				all.push([offset, span[0], '#text']);
+			}
+			all.push(span);
+			offset = span[1];
+		});
+		if (last[1] < content.length) {
+			all.push([last[1], content.length, '#text']);
+		}
+		return all;
 	}
 
 	/**
@@ -672,81 +719,44 @@ define([
 	 * @param  {string}                  content
 	 * @param  {!Array.<Span>}           formatting
 	 * @param  {!Array.<Span>}           boundaries
-	 * @param  {!Array.<Array.<number>>} paths
-	 * @param  {!Array.<Span>}           bounds
+	 * @param  {!Array}                  paths
 	 * @param  {!Array.<number>}         trail
 	 * return  {Object}
 	 */
-	function buildReference(
-		content,
-		formatting,
-		boundaries,
-		paths,
-		trail,
-		bounds
-	) {
-		trail  = trail  || [];
-		paths  = paths  || [];
-		bounds = bounds || [0, content.length];
-		boundaries = tagLists(boundaries || []);
-		formatting = formatting.sort(compareSpans);
-		var kids = [];
-		var index = 0;
-		var offset = bounds[0];
-		var siblings = siblingSpans(formatting, offset);
-		siblings.forEach(function (span) {
-			var bounds;
+	function buildReference(content, formatting, boundaries, paths, trail) {
+		trail = trail || [];
+		boundaries = markList(boundaries);
+		return segments(getSiblings(formatting), content).map(function (span, index) {
 			var start = span[0];
 			var end = span[1];
 			var node = span[2];
-
-			// Because we want to capture all preceeding text before the start
-			// of the first formatting span
-			if (start > offset) {
-				kids.push({ text: content.substring(offset, start) });
-				bounds = startBoundaryBetween(boundaries, offset, start);
-				if (bounds.length) {
-					paths.push(trail.concat(index, bounds[0][0] - offset));
-				}
-				index++;
+			var path = trail.concat(index);
+			var text = content.substring(start, end);
+			var nested = getChildren(span, formatting);
+			var clipped = getChildren(span, boundaries);
+			getPaths(span, unencapsulated(clipped, nested), path).forEach(function (path) {
+				paths.push(path);
+			});
+			if ('#text' === node) {
+				return {text: text};
 			}
-			var grandkids;
-			var nestedFormatting = nestedSpans(formatting, span);
-			if (nestedFormatting.length > 0) {
-				grandkids = buildReference(
-					content,
-					nestedFormatting,
-					boundaries,
-					paths,
-					trail.concat([index]),
-					span
-				);
+			var children;
+			// node = <p><i>foo</i><u>bar</u></p> children are nodes
+			if (nested.length > 0) {
+				children = buildReference(text, nested, clipped, paths, path);
+			// node = <br/> no children possible
 			} else if (isVoidType(node)) {
-				grandkids = [];
+				children = [];
+			// <p>foobar</p> child is text node
 			} else {
-				grandkids = [{ text: content.substring(start, end) }];
-				bounds = startBoundaryBetween(boundaries, start, end);
-				if (bounds.length) {
-					paths.push(trail.concat(index, 0, bounds[0][0] - start));
-				}
+				children = [{text: text}];
 			}
-			kids.push({
+			return {
 				reference : node,
 				name      : node.nodeName,
-				kids      : grandkids
-			});
-			index++;
-			offset = end;
+				kids      : children
+			};
 		});
-		var last = Arrays.last(siblings);
-		if (last[1] < bounds[1]) {
-			kids.push({ text: content.substring(last[1], bounds[1]) });
-			bounds = startBoundaryBetween(boundaries, last[1], bounds[1]);
-			if (bounds.length) {
-				paths.push(trail.concat(index, bounds[0][0] - last[1]));
-			}
-		}
-		return kids;
 	}
 
 	/**
@@ -998,18 +1008,19 @@ define([
 	 * @param  {!Sequence} sequence
 	 */
 	function update(sequence) {
-		// sequence.formatting = format(sequence, sequence.boundaries[0], __.pop());
+		sequence.formatting = format(sequence, sequence.boundaries[0], __.pop());
 		var seq = returnWhitespaces(sequence);
 		var oldTree = seq.element;
 		var newTree = oldTree.ownerDocument.createElement(oldTree.nodeName);
 		Dom.setAttr(newTree, 'contentEditable', 'true');
 		var paths = [];
-		newTree = buildTree(buildReference(
+		var reference = buildReference(
 			seq.content,
 			seq.formatting,
 			seq.boundaries,
 			paths
-		), newTree);
+		);
+		newTree = buildTree(reference, newTree);
 		console.log(JSON.stringify(paths));
 		console.warn(aloha.paths.fromBoundary(Dom.query('p', document)[0], aloha.boundaries.get(document)[0]));
 		updateDom(oldTree, newTree, insertNode, removeNode);
