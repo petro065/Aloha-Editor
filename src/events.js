@@ -11,11 +11,9 @@
  */
 define([
 	'functions',
-	'misc',
 	'assert'
 ], function (
 	Fn,
-	Misc,
 	Assert
 ) {
 	'use strict';

@@ -10,6 +10,7 @@ define([
 	'dom',
 	'html',
 	'maps',
+	'arrays',
 	'browsers',
 	'traversing',
 	'boundaries'
@@ -17,6 +18,7 @@ define([
 	Dom,
 	Html,
 	Maps,
+	Arrays,
 	Browsers,
 	Traversing,
 	Boundaries
@@ -159,17 +161,32 @@ define([
 	 * Returns a mutable bounding client rectangle from the reference range or
 	 * element.
 	 *
-	 * @private
 	 * @param  {Element|Range} reference
 	 * @return {Object.<string, number>}
 	 */
 	function boundingRect(reference) {
-		var rect = reference.getClientRects()[0] || reference.getBoundingClientRect();
+		// Because getBoundingClientRect at terminal position in text is broken
+		var rects = Arrays.coerce(reference.getClientRects());
+		var bounds = rects.reduce(function (bounds, rect) {
+			bounds.top = Math.min(rect.top, bounds.top);
+			bounds.left = Math.min(rect.left, bounds.left);
+			bounds.bottom = Math.max(rect.top + rect.height, bounds.bottom);
+			bounds.right = Math.max(rect.left + rect.width, bounds.right);
+			return bounds;
+		}, {
+			top    : Infinity,
+			left   : Infinity,
+			right  : -Infinity,
+			bottom : -Infinity
+		});
+		if (Infinity === bounds.top) {
+			bounds = reference.getBoundingClientRect();
+		}
 		return {
-			top    : rect.top,
-			left   : rect.left,
-			width  : rect.width,
-			height : rect.height
+			top    : bounds.top,
+			left   : bounds.left,
+			width  : bounds.right - bounds.left,
+			height : bounds.bottom - bounds.top
 		};
 	}
 
@@ -248,10 +265,14 @@ define([
 	 */
 	function bounds(range) {
 		var rect;
+		var collapsed = range.collapsed;
 		var expanded = expandRight(range);
 		if (expanded) {
 			rect = boundingRect(expanded);
 			if (rect.width && !isChromeBug(rect, range)) {
+				if (collapsed && rect.width > 0) {
+					rect.width = 1;
+				}
 				return rect;
 			}
 		}
@@ -259,13 +280,76 @@ define([
 		if (expanded) {
 			rect = boundingRect(expanded);
 			rect.left += rect.width;
+			if (collapsed && rect.width > 0) {
+				rect.width = 1;
+			}
 			return rect;
 		}
-		return boundingRect(range);
+		rect = boundingRect(range);
+		if (collapsed && rect.width > 0) {
+			rect.width = 1;
+		}
+		return rect;
 	}
 
 	/**
-	 * Gets the bounding box of offets for the given range.
+	 * Calculates the bounding box of the given range relative to the viewport
+	 *
+	 * @param {Boundary} start
+	 * @param {Boundary} end
+	 * @return {Object}
+	 */
+	function boundsFromBoundaries(start, end) {
+		if (!end) {
+			end = start;
+		}
+
+		var range = Boundaries.range(start, end);
+		var rect = bounds(range);
+		var doc = range.commonAncestorContainer.ownerDocument;
+
+		ensureBrStyleFix(doc);
+
+		// Because `rect` should be the box of an expanded range and must
+		// therefore have a non-zero width if valid
+		if (rect.width > 0) {
+			return {
+				top    : rect.top,
+				left   : rect.left,
+				width  : rect.width,
+				height : rect.height
+			};
+		}
+
+		var node = Boundaries.nodeAfter(start)
+		        || Boundaries.nodeBefore(start);
+
+		if (node && !Dom.isTextNode(node)) {
+			rect = boundingRect(node);
+			if (rect) {
+				return {
+					top    : rect.top,
+					left   : rect.left,
+					width  : rect.width,
+					height : rect.height
+				};
+			}
+		}
+
+		// <li>{}</li>
+		node = Boundaries.container(start);
+
+		return {
+			top    : node.offsetTop,
+			left   : node.offsetLeft,
+			width  : node.offsetWidth,
+			height : parseInt(Dom.getComputedStyle(node, 'line-height'), 10)
+		};
+	}
+
+	/**
+	 * Gets the bounding box of offets in the document (not in the viewport) for
+	 * the given range.
 	 *
 	 * This function requires the following css:
 	 * .aloha-editable br, .aloha-editable br:after { content: "\A"; white-space: pre-line; }
@@ -324,8 +408,11 @@ define([
 	}
 
 	return {
-		box      : box,
-		showHint : showHint,
-		hideHint : hideHint
+		box                  : box,
+		showHint             : showHint,
+		hideHint             : hideHint,
+		boundsFromElement    : boundingRect,
+		boundsFromBoundaries : boundsFromBoundaries
 	};
 });
+

@@ -453,9 +453,11 @@ define([
 	exports['paths']['fromBoundary'] = Paths.fromBoundary;
 
 	exports['carets'] = {};
-	exports['carets']['box']      = Carets.box;
-	exports['carets']['showHint'] = Carets.showHint;
-	exports['carets']['hideHint'] = Carets.hideHint;
+	exports['carets']['box']                  = Carets.box;
+	exports['carets']['showHint']             = Carets.showHint;
+	exports['carets']['hideHint']             = Carets.hideHint;
+	exports['carets']['boundsFromElement']    = Carets.boundsFromElement;
+	exports['carets']['boundsFromBoundaries'] = Carets.boundsFromBoundaries;
 
 	exports['selectionchange'] = {};
 	exports['selectionchange']['middleware']    = SelectionChange.middleware;
